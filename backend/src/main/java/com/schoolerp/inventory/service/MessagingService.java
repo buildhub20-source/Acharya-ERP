@@ -86,13 +86,21 @@ public class MessagingService {
                         + "\". We have proceeded with another vendor this time.");
     }
 
-    public void sendPortalInvite(Vendor vendor) {
-        send(Channel.EMAIL, vendor, "Invitation to Greenfield vendor portal",
-                "You have been invited to register as a vendor. Complete your profile here: "
-                        + "http://localhost:3000/portal/register?code=" + vendor.getCode());
+    public void sendPortalInvite(Vendor vendor, String link) {
+        send(Channel.EMAIL, vendor, "Invitation to the Greenfield vendor portal",
+                "Greenfield Public School has invited you to register as a supplier.\n"
+                        + "Complete your profile, verify your contact and upload your GST / PAN documents here:\n" + link
+                        + "\n\nThis link is personal to your business; please do not share it.");
         send(Channel.WHATSAPP, vendor, "Vendor portal invite",
-                "Greenfield Public School has invited you to its vendor portal. Register: "
-                        + "http://localhost:3000/portal/register?code=" + vendor.getCode());
+                "Greenfield Public School has invited you to its vendor portal. Complete your registration: " + link);
+    }
+
+    /** One-time code to a specific contact's phone or email (not necessarily the primary contact). */
+    public void sendOtp(Vendor vendor, ContactPerson contact, boolean phone, String code) {
+        String body = code + " is your Greenfield vendor portal verification code. It expires in 10 minutes. Do not share it.";
+        Channel channel = phone ? Channel.SMS : Channel.EMAIL;
+        String to = phone ? contact.getPhone() : contact.getEmail();
+        record(channel, vendor, to, "Verification code", body);
     }
 
     public void notifyVendor(Vendor vendor, String subject, String body) {
@@ -107,6 +115,10 @@ public class MessagingService {
             case SMS -> c == null ? "-" : c.getPhone();
             case PORTAL -> "portal:" + vendor.getCode();
         };
+        record(channel, vendor, to, subject, body);
+    }
+
+    private void record(Channel channel, Vendor vendor, String to, String subject, String body) {
         outbox.add(0, new OutboxMessage(LocalDateTime.now(), channel, vendor.getId(),
                 vendor.getDisplayName(), to, subject, body));
         log.info("[MOCK {}] to {} <{}>: {}", channel, vendor.getDisplayName(), to, subject);

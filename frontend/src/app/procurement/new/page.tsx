@@ -112,7 +112,7 @@ function NewRequestForm({ reorder }: { reorder?: { item: Item; quantity: string 
             </Field>
           </div>
           {estimate !== null && (
-            <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            <p className="mt-4 rounded-lg bg-raised px-3 py-2 text-sm text-ink-soft">
               Estimate from last purchase price ({money(selectedItem!.lastPurchasePrice)}/{selectedItem!.unit}): <b>{money(estimate)}</b> before tax
             </p>
           )}

@@ -198,9 +198,13 @@ public class ProcurementService {
     /** Vendors to suggest in step 2: active, in the category, ranked by score. */
     public List<Vendor> suggestedVendors(String prId) {
         PurchaseRequest pr = get(prId);
+        String itemId = pr.getLines().isEmpty() ? null : pr.getLines().get(0).getItemId();
         return vendors.findAll().stream()
                 .filter(v -> v.getCategoryIds().contains(pr.getCategoryId()))
                 .sorted(Comparator.comparing(Vendor::isRfqEligible).reversed()
+                        // vendors whose catalogue lists this exact item come first
+                        .thenComparing((Vendor v) -> itemId != null && v.getCatalogue().stream().anyMatch(c -> itemId.equals(c.getItemId())),
+                                Comparator.reverseOrder())
                         .thenComparing(Comparator.comparingDouble((Vendor v) -> v.getPerformance().getOverallScore()).reversed()))
                 .toList();
     }

@@ -38,23 +38,23 @@ export default function RfqTracking({ detail, onChange }: { detail: PurchaseRequ
 
   const replied = rfqs.filter((r) => r.status === "REPLIED").length;
   return (
-    <Card title={<>Vendor tracking · round {pr.round} <span className="ml-2 font-normal text-slate-500">{replied}/{rfqs.length} replied</span></>}
+    <Card title={<>Vendor tracking · round {pr.round} <span className="ml-2 font-normal text-ink-mute">{replied}/{rfqs.length} replied</span></>}
       bodyClass="p-0"
-      actions={pr.quoteDeadline && <span className="text-xs text-slate-500">Deadline {dateTime(pr.quoteDeadline)}</span>}>
+      actions={pr.quoteDeadline && <span className="text-xs text-ink-mute">Deadline {dateTime(pr.quoteDeadline)}</span>}>
       <div className="px-5 pt-4"><ErrorBox message={error} onClose={() => setError(null)} /></div>
       <div className="overflow-x-auto">
         <table className="min-w-full">
-          <thead className="bg-slate-50">
+          <thead className="bg-raised">
             <tr><th className="th">Vendor</th><th className="th">Channels</th><th className="th">Progress</th><th className="th">Reminders</th><th className="th" /></tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-rule">
             {rfqs.map((r) => {
               const idx = PIPE.indexOf(r.status);
               return (
                 <tr key={r.id}>
                   <td className="td">
                     <div className="font-medium">{r.vendorName}</div>
-                    <button className="text-xs text-indigo-600 hover:underline" onClick={() => setPreview(r)}>{r.reference}</button>
+                    <button className="text-xs text-poster hover:underline" onClick={() => setPreview(r)}>{r.reference}</button>
                   </td>
                   <td className="td"><div className="flex flex-wrap gap-1">{r.channels.map((c) => <ChannelChip key={c} channel={c} />)}</div></td>
                   <td className="td">
@@ -62,20 +62,20 @@ export default function RfqTracking({ detail, onChange }: { detail: PurchaseRequ
                       <div className="flex items-center gap-1">
                         {PIPE.map((p, i) => (
                           <div key={p} className="flex items-center gap-1">
-                            <span className={`rounded px-1.5 py-0.5 text-[11px] ${i <= idx ? (p === "REPLIED" ? "bg-emerald-100 text-emerald-800" : "bg-sky-100 text-sky-800") : "bg-slate-100 text-slate-400"}`}>
+                            <span className={`rounded px-1.5 py-0.5 text-[11px] ${i <= idx ? (p === "REPLIED" ? "bg-ok/20 text-ok" : "bg-info/20 text-info") : "bg-raised-2 text-ink-mute"}`}>
                               {p[0] + p.slice(1).toLowerCase()}
                             </span>
-                            {i < PIPE.length - 1 && <span className="text-slate-300">→</span>}
+                            {i < PIPE.length - 1 && <span className="text-ink-faint">→</span>}
                           </div>
                         ))}
                       </div>
                     )}
-                    <div className="mt-1 text-[11px] text-slate-400">
+                    <div className="mt-1 text-[11px] text-ink-mute">
                       {r.repliedAt ? `Replied ${timeAgo(r.repliedAt)}` : r.readAt ? `Read ${timeAgo(r.readAt)}` : `Sent ${timeAgo(r.sentAt)}`}
                     </div>
                   </td>
                   <td className="td">
-                    {r.reminderCount > 0 ? <Badge tone="amber">{r.reminderCount} sent</Badge> : <span className="text-xs text-slate-400">—</span>}
+                    {r.reminderCount > 0 ? <Badge tone="amber">{r.reminderCount} sent</Badge> : <span className="text-xs text-ink-mute">—</span>}
                   </td>
                   <td className="td text-right">
                     {collecting && r.status !== "REPLIED" && r.status !== "NO_RESPONSE" && (
@@ -104,7 +104,7 @@ export default function RfqTracking({ detail, onChange }: { detail: PurchaseRequ
                 {(["WHATSAPP_TEXT", "EMAIL_TEXT", "PDF", "IMAGE", "VOICE"] as QuoteSource[]).map((s) => (
                   <button key={s} type="button"
                     onClick={() => setReply({ ...reply, source: s, text: reply.text && !Object.values(SAMPLE).includes(reply.text) ? reply.text : SAMPLE[s] })}
-                    className={`rounded-full border px-3 py-1 text-xs ${reply.source === s ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-300 text-slate-600"}`}>
+                    className={`rounded-full border px-3 py-1 text-xs ${reply.source === s ? "border-poster bg-poster/10 text-poster" : "border-rule-strong text-ink-soft"}`}>
                     {{ WHATSAPP_TEXT: "WhatsApp text", EMAIL_TEXT: "Email", PDF: "PDF", IMAGE: "Image (OCR)", VOICE: "Voice note" }[s as string]}
                   </button>
                 ))}
@@ -118,7 +118,7 @@ export default function RfqTracking({ detail, onChange }: { detail: PurchaseRequ
       </Modal>
 
       <Modal open={!!preview} title={`${preview?.reference} → ${preview?.vendorName}`} onClose={() => setPreview(null)} wide>
-        <pre className="whitespace-pre-wrap font-sans text-sm text-slate-700">{preview?.message}</pre>
+        <pre className="whitespace-pre-wrap font-sans text-sm text-ink-soft">{preview?.message}</pre>
       </Modal>
     </Card>
   );

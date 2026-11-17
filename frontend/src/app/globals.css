@@ -1,64 +1,118 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f6f7fb;
-  --foreground: #1c1f2a;
+/*
+ * GradusMind UI — "workshop wall after hours".
+ * One dark wall, charcoal panels pinned on it, poster-yellow for the primary action,
+ * signal red for the thing that needs attention. Anton for display, Geist for everything else.
+ * Every colour in the app comes from these tokens; don't reach for raw Tailwind palette colours.
+ */
+@theme {
+  /* surfaces */
+  --color-wall: #0b0c0d;          /* page background */
+  --color-panel: #16181b;         /* cards, sidebar, header */
+  --color-raised: #1d2023;        /* table heads, hover rows, inputs */
+  --color-raised-2: #24272b;      /* chips, tracks, pressed */
+  --color-rule: #26292d;          /* borders, dividers */
+  --color-rule-strong: #383c42;   /* input / button borders */
+
+  /* ink */
+  --color-ink: #eeede8;           /* headings, primary text */
+  --color-ink-soft: #c4c5c1;      /* body text */
+  --color-ink-mute: #8f9296;      /* secondary text, captions */
+  --color-ink-faint: #5a5e63;     /* placeholders, empty markers */
+
+  /* brand */
+  --color-poster: #f6d200;        /* primary action, active nav, focus */
+  --color-poster-hover: #ffe033;
+  --color-poster-ink: #121212;    /* text on poster yellow */
+  --color-signal: #c4351e;        /* brand red: danger buttons, the "learner dot" */
+  --color-signal-hover: #d9442b;
+  --color-paper: #f3f1ea;
+
+  /* status (tuned for text on the dark wall) */
+  --color-ok: #4cc38a;
+  --color-ok-hover: #62d29b;
+  --color-warn: #f0a43a;
+  --color-danger: #f0705a;
+  --color-info: #6cb6e8;
+  --color-accent-2: #b59cf2;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-anton), "Arial Narrow", Impact, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  color-scheme: dark; /* native date pickers, selects and scrollbars render dark */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--color-wall);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-poster);
+  color: var(--color-poster-ink);
+}
+
+select option {
+  background: var(--color-panel);
+  color: var(--color-ink);
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
 }
 
 @utility card {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
-  }
+  @apply rounded-md border border-rule bg-panel;
+}
 
 @utility btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
-  }
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poster disabled:cursor-not-allowed disabled:opacity-40;
+}
 
 @utility btn-primary {
-    @apply btn bg-indigo-600 text-white hover:bg-indigo-700;
-  }
+  @apply btn bg-poster text-poster-ink hover:bg-poster-hover;
+}
 
 @utility btn-success {
-    @apply btn bg-emerald-600 text-white hover:bg-emerald-700;
-  }
+  @apply btn bg-ok text-wall hover:bg-ok-hover;
+}
 
 @utility btn-danger {
-    @apply btn bg-rose-600 text-white hover:bg-rose-700;
-  }
+  @apply btn bg-signal text-white hover:bg-signal-hover;
+}
 
 @utility btn-secondary {
-    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
-  }
+  @apply btn border border-rule-strong bg-raised text-ink hover:border-ink-faint hover:bg-raised-2;
+}
 
 @utility btn-ghost {
-    @apply btn text-slate-600 hover:bg-slate-100;
-  }
+  @apply btn text-ink-soft hover:bg-raised-2 hover:text-ink;
+}
 
 @utility input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100;
-  }
+  @apply w-full rounded-md border border-rule-strong bg-raised px-3 py-2 text-sm text-ink outline-none transition placeholder:text-ink-faint focus:border-poster focus:ring-2 focus:ring-poster/20 disabled:opacity-50;
+}
 
 @utility field-label {
-    @apply mb-1 block text-xs font-medium text-slate-600;
-  }
+  @apply mb-1 block text-xs font-medium text-ink-mute;
+}
 
 @utility th {
-    @apply px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
-  }
+  @apply px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-ink-mute;
+}
 
 @utility td {
-    @apply px-4 py-3 text-sm text-slate-700;
-  }
+  @apply px-4 py-3 text-sm text-ink-soft;
+}
 
+@media print {
+  body { background: #fff; color: #000; }
+}

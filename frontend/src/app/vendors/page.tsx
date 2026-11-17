@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { Card, Empty, ErrorBox, Loading, PageHeader, ScoreBar, Stars, StatusBadge } from "@/components/ui";
+import { downloadVendorsCsv } from "@/lib/csv";
 import { label } from "@/lib/format";
 import { useApi } from "@/lib/hooks";
 import type { Category, Vendor, VendorStatus } from "@/lib/types";
@@ -40,7 +41,10 @@ function VendorList() {
       <PageHeader
         title="Vendors"
         subtitle="Verified supplier master: categories, contacts, compliance and performance"
-        actions={<Link href="/vendors/new" className="btn-primary">+ Add / invite vendor</Link>}
+        actions={<>
+          <button className="btn-secondary" disabled={!filtered.length} onClick={() => downloadVendorsCsv(filtered, catName)}>Export CSV</button>
+          <Link href="/vendors/new" className="btn-primary">+ Add / invite vendor</Link>
+        </>}
       />
       <ErrorBox message={error} />
 
@@ -60,37 +64,37 @@ function VendorList() {
         {loading && !vendors ? <Loading /> : filtered.length === 0 ? <Empty>No vendors match these filters.</Empty> : (
           <div className="overflow-x-auto">
             <table className="min-w-full">
-              <thead className="bg-slate-50">
+              <thead className="bg-raised">
                 <tr>
                   <th className="th">Vendor</th><th className="th">Categories</th><th className="th">Contact</th>
                   <th className="th">Status</th><th className="th">Score</th><th className="th">Rating</th><th className="th">Portal</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-rule">
                 {filtered.map((v) => (
-                  <tr key={v.id} className="cursor-pointer hover:bg-slate-50" onClick={() => router.push(`/vendors/${v.id}`)}>
+                  <tr key={v.id} className="cursor-pointer hover:bg-raised" onClick={() => router.push(`/vendors/${v.id}`)}>
                     <td className="td">
-                      <div className="font-medium text-slate-900">{v.displayName}</div>
-                      <div className="text-xs text-slate-500">{v.code} · {v.city} · {label(v.type)}</div>
+                      <div className="font-medium text-ink">{v.displayName}</div>
+                      <div className="text-xs text-ink-mute">{v.code} · {v.city} · {label(v.type)}</div>
                     </td>
                     <td className="td">
                       <div className="flex flex-wrap gap-1">
                         {v.categoryIds.map((c) => (
-                          <span key={c} className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">{catName[c] ?? c}</span>
+                          <span key={c} className="rounded bg-raised-2 px-1.5 py-0.5 text-xs text-ink-soft">{catName[c] ?? c}</span>
                         ))}
                       </div>
                     </td>
                     <td className="td">
                       <div>{v.contacts[0]?.name}</div>
-                      <div className="text-xs text-slate-500">{v.contacts[0]?.phone}</div>
+                      <div className="text-xs text-ink-mute">{v.contacts[0]?.phone}</div>
                     </td>
                     <td className="td">
                       <StatusBadge status={v.status} />
-                      {v.pendingBankChange && <div className="mt-1 text-[11px] text-rose-600">Bank change pending</div>}
+                      {v.pendingBankChange && <div className="mt-1 text-[11px] text-danger">Bank change pending</div>}
                     </td>
                     <td className="td"><ScoreBar value={v.performance.overallScore} /></td>
                     <td className="td"><Stars value={v.performance.manualRating} /></td>
-                    <td className="td text-xs">{v.portalEnabled ? "✓ Enabled" : <span className="text-slate-400">—</span>}</td>
+                    <td className="td text-xs">{v.portalEnabled ? "✓ Enabled" : <span className="text-ink-mute">—</span>}</td>
                   </tr>
                 ))}
               </tbody>

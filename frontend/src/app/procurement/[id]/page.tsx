@@ -47,7 +47,7 @@ export default function PurchaseRequestPage() {
         back={{ href: "/procurement", label: "Purchase requests" }}
         title={<span className="flex flex-wrap items-center gap-3">{pr.title} <StatusBadge status={pr.status} /></span>}
         subtitle={<>{pr.number} · {d.categoryName} · {pr.department} · requested by {pr.requestedBy}</>}
-        actions={!closed && <button className="btn-ghost text-rose-600" onClick={() => setCancelOpen(true)}>Cancel request</button>}
+        actions={!closed && <button className="btn-ghost text-danger" onClick={() => setCancelOpen(true)}>Cancel request</button>}
       />
       <ErrorBox message={act.error} onClose={() => act.setError(null)} />
 
@@ -56,22 +56,22 @@ export default function PurchaseRequestPage() {
       <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_320px]">
         <div className="min-w-0 space-y-6">
           {d.purchaseOrder && (
-            <div className="card border-emerald-200 bg-emerald-50/50 p-5">
+            <div className="card border-ok/30 bg-ok/10 p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="text-xs font-medium uppercase tracking-wide text-emerald-700">Purchase order confirmed</div>
-                  <div className="mt-1 text-xl font-semibold text-slate-900">{d.purchaseOrder.number} · {d.purchaseOrder.vendorName}</div>
-                  <div className="mt-1 text-sm text-slate-600">
+                  <div className="text-xs font-medium uppercase tracking-wide text-ok">Purchase order confirmed</div>
+                  <div className="mt-1 text-xl font-semibold text-ink">{d.purchaseOrder.number} · {d.purchaseOrder.vendorName}</div>
+                  <div className="mt-1 text-sm text-ink-soft">
                     {money(d.purchaseOrder.amount)} · {terms(d.purchaseOrder.paymentTerms)} · expected by {date(d.purchaseOrder.expectedDelivery)}
                   </div>
                 </div>
                 <StatusBadge status={d.purchaseOrder.status} />
               </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-emerald-100 pt-3">
-                <div className="text-sm text-slate-700">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ok/30 pt-3">
+                <div className="text-sm text-ink-soft">
                   Received <b>{d.purchaseOrder.acceptedQuantity}</b> of {d.purchaseOrder.orderedQuantity} {d.purchaseOrder.unit}
-                  {d.purchaseOrder.rejectedQuantity > 0 && <span className="text-rose-600"> · {d.purchaseOrder.rejectedQuantity} rejected</span>}
-                  {d.purchaseOrder.overdue && <span className="text-rose-600"> · delivery overdue</span>}
+                  {d.purchaseOrder.rejectedQuantity > 0 && <span className="text-danger"> · {d.purchaseOrder.rejectedQuantity} rejected</span>}
+                  {d.purchaseOrder.overdue && <span className="text-danger"> · delivery overdue</span>}
                 </div>
                 {d.purchaseOrder.pendingQuantity > 0
                   ? <Link href={`/inventory/receipts/new?po=${d.purchaseOrder.id}`} className="btn-success">Receive goods (GRN)</Link>
@@ -81,14 +81,14 @@ export default function PurchaseRequestPage() {
           )}
 
           {selecting && (user.role === "OFFICIAL"
-            ? <Card title="Select vendors"><p className="text-sm text-slate-500">The store manager will select vendors and send the RFQ.</p></Card>
+            ? <Card title="Select vendors"><p className="text-sm text-ink-mute">The store manager will select vendors and send the RFQ.</p></Card>
             : <VendorSelection detail={d} onDone={setData} />)}
 
           {(collecting || d.rfqs.length > 0) && !selecting && (
             <>
               {collecting && (
-                <div className="card flex flex-wrap items-center justify-between gap-3 border-emerald-200 bg-emerald-50/40 p-4">
-                  <div className="text-sm text-slate-700">
+                <div className="card flex flex-wrap items-center justify-between gap-3 border-ok/30 bg-ok/10 p-4">
+                  <div className="text-sm text-ink-soft">
                     <b>Collecting quotes.</b> Vendors who don&apos;t reply get an automatic reminder every 24h (max 3).
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -114,7 +114,7 @@ export default function PurchaseRequestPage() {
 
           {d.comparison.rows.length > 0 && !collecting && !selecting && <ComparisonPanel detail={d} onDone={setData} />}
           {collecting && d.comparison.rows.length > 1 && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-ink-mute">
               Current lowest landed cost: <b>{money(d.comparison.l1Amount)}</b> ({d.comparison.rows[0].quote.vendorName}). The full comparison opens once quotes are closed.
             </p>
           )}
@@ -123,17 +123,17 @@ export default function PurchaseRequestPage() {
         <aside className="space-y-6">
           <Card title="Request">
             <dl className="space-y-3 text-sm">
-              <div><dt className="text-xs text-slate-500">Item</dt><dd className="font-medium">{line?.description}</dd></div>
-              {line?.specs && <div><dt className="text-xs text-slate-500">Specs</dt><dd>{line.specs}</dd></div>}
+              <div><dt className="text-xs text-ink-mute">Item</dt><dd className="font-medium">{line?.description}</dd></div>
+              {line?.specs && <div><dt className="text-xs text-ink-mute">Specs</dt><dd>{line.specs}</dd></div>}
               <div className="grid grid-cols-2 gap-3">
-                <div><dt className="text-xs text-slate-500">Quantity</dt><dd className="font-medium">{pr.totalQuantity} {line?.unit}</dd></div>
-                <div><dt className="text-xs text-slate-500">Needed by</dt><dd>{date(pr.dueDate)}</dd></div>
-                <div><dt className="text-xs text-slate-500">Budget</dt><dd>{money(pr.budgetAmount, true)}</dd></div>
-                <div><dt className="text-xs text-slate-500">Round</dt><dd>{pr.round}</dd></div>
+                <div><dt className="text-xs text-ink-mute">Quantity</dt><dd className="font-medium">{pr.totalQuantity} {line?.unit}</dd></div>
+                <div><dt className="text-xs text-ink-mute">Needed by</dt><dd>{date(pr.dueDate)}</dd></div>
+                <div><dt className="text-xs text-ink-mute">Budget</dt><dd>{money(pr.budgetAmount, true)}</dd></div>
+                <div><dt className="text-xs text-ink-mute">Round</dt><dd>{pr.round}</dd></div>
               </div>
-              <div><dt className="text-xs text-slate-500">Deliver to</dt><dd>{pr.deliveryLocation || "—"}</dd></div>
-              <div><dt className="text-xs text-slate-500">Budget head</dt><dd>{pr.budgetHead || "—"}</dd></div>
-              {pr.quoteDeadline && <div><dt className="text-xs text-slate-500">Quote deadline</dt><dd>{dateTime(pr.quoteDeadline)}</dd></div>}
+              <div><dt className="text-xs text-ink-mute">Deliver to</dt><dd>{pr.deliveryLocation || "—"}</dd></div>
+              <div><dt className="text-xs text-ink-mute">Budget head</dt><dd>{pr.budgetHead || "—"}</dd></div>
+              {pr.quoteDeadline && <div><dt className="text-xs text-ink-mute">Quote deadline</dt><dd>{dateTime(pr.quoteDeadline)}</dd></div>}
             </dl>
           </Card>
 
@@ -144,11 +144,11 @@ export default function PurchaseRequestPage() {
                   <li key={i}>
                     <div className="flex items-center gap-2">
                       <Badge tone={a.decision === "APPROVED" ? "green" : a.decision === "REJECTED" ? "red" : "amber"}>{label(a.decision)}</Badge>
-                      <span className="text-xs text-slate-500">{a.level === "MANAGER" ? "Level 1" : "Level 2"}</span>
+                      <span className="text-xs text-ink-mute">{a.level === "MANAGER" ? "Level 1" : "Level 2"}</span>
                     </div>
                     <div className="mt-1 font-medium">{a.approver}</div>
-                    {a.comments && <div className="text-xs text-slate-600">“{a.comments}”</div>}
-                    <div className="text-[11px] text-slate-400">{dateTime(a.at)}</div>
+                    {a.comments && <div className="text-xs text-ink-soft">“{a.comments}”</div>}
+                    <div className="text-[11px] text-ink-mute">{dateTime(a.at)}</div>
                   </li>
                 ))}
               </ol>
@@ -156,12 +156,12 @@ export default function PurchaseRequestPage() {
           )}
 
           <Card title="Audit trail" bodyClass="p-0">
-            <ul className="max-h-96 divide-y divide-slate-100 overflow-y-auto">
+            <ul className="max-h-96 divide-y divide-rule overflow-y-auto">
               {pr.audit.map((a, i) => (
                 <li key={i} className="px-5 py-2.5 text-xs">
-                  <div className="flex justify-between gap-2"><b className="font-medium text-slate-700">{label(a.action)}</b><span className="text-slate-400">{dateTime(a.at)}</span></div>
-                  <div className="text-slate-500">{a.details}</div>
-                  <div className="text-slate-400">{a.by}</div>
+                  <div className="flex justify-between gap-2"><b className="font-medium text-ink-soft">{label(a.action)}</b><span className="text-ink-mute">{dateTime(a.at)}</span></div>
+                  <div className="text-ink-mute">{a.details}</div>
+                  <div className="text-ink-mute">{a.by}</div>
                 </li>
               ))}
             </ul>

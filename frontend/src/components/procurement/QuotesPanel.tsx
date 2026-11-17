@@ -33,20 +33,20 @@ export default function QuotesPanel({ detail, onChange }: { detail: PurchaseRequ
   return (
     <Card title={`Responses received (${quotes.length})`} bodyClass="p-0">
       {quotes.length === 0 ? <Empty>No responses yet. Replies from email, WhatsApp, PDF, image or voice will appear here as structured quotes.</Empty> : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-rule">
           {quotes.map((q) => {
             const flagged = (f: string) => q.lowConfidenceFields.includes(f) && !q.manuallyVerified;
-            const cell = (f: string, v: React.ReactNode) => <span className={flagged(f) ? "rounded bg-amber-100 px-1 text-amber-900" : ""} title={flagged(f) ? "Low confidence: please verify" : undefined}>{v}</span>;
+            const cell = (f: string, v: React.ReactNode) => <span className={flagged(f) ? "rounded bg-warn/20 px-1 text-warn" : ""} title={flagged(f) ? "Low confidence: please verify" : undefined}>{v}</span>;
             return (
               <li key={q.id} className="px-5 py-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-slate-900">{q.vendorName}</span>
+                  <span className="font-medium text-ink">{q.vendorName}</span>
                   <Badge tone="gray">{SRC[q.source]}</Badge>
                   {q.version > 1 && <Badge tone="purple">v{q.version}</Badge>}
                   {q.late && <Badge tone="red">Late</Badge>}
                   {q.needsReview ? <Badge tone="amber">Needs review · {(q.parseConfidence * 100).toFixed(0)}% confidence</Badge>
                     : q.source !== "PORTAL" && q.source !== "MANUAL" && <Badge tone="green">{q.manuallyVerified ? "Verified" : `Parsed · ${(q.parseConfidence * 100).toFixed(0)}%`}</Badge>}
-                  <span className="ml-auto text-xs text-slate-400">{dateTime(q.receivedAt)}</span>
+                  <span className="ml-auto text-xs text-ink-mute">{dateTime(q.receivedAt)}</span>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3 lg:grid-cols-6">
                   <KV k="Unit price" v={cell("unitPrice", money(q.unitPrice))} />
@@ -56,13 +56,13 @@ export default function QuotesPanel({ detail, onChange }: { detail: PurchaseRequ
                   <KV k="Validity" v={cell("validityDays", `${q.validityDays} days`)} />
                   <KV k="Landed cost" v={<b>{money(q.landedCost)}</b>} />
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-ink-mute">
                   <span>Terms: {terms(q.paymentTerms)}</span>
                   {q.remarks && <span>· {q.remarks}</span>}
-                  {!q.meetsSpecs && <span className="text-rose-600">· Spec deviation: {q.specDeviation}</span>}
-                  {q.rawText && <button className="text-indigo-600 hover:underline" onClick={() => setRaw(q)}>View original{q.attachmentName ? ` (${q.attachmentName})` : ""}</button>}
+                  {!q.meetsSpecs && <span className="text-danger">· Spec deviation: {q.specDeviation}</span>}
+                  {q.rawText && <button className="text-poster hover:underline" onClick={() => setRaw(q)}>View original{q.attachmentName ? ` (${q.attachmentName})` : ""}</button>}
                   {editable && (q.needsReview || q.source !== "PORTAL") && (
-                    <button className="text-indigo-600 hover:underline" onClick={() => setEdit({ ...q })}>{q.needsReview ? "Verify & correct" : "Edit"}</button>
+                    <button className="text-poster hover:underline" onClick={() => setEdit({ ...q })}>{q.needsReview ? "Verify & correct" : "Edit"}</button>
                   )}
                 </div>
               </li>
@@ -72,7 +72,7 @@ export default function QuotesPanel({ detail, onChange }: { detail: PurchaseRequ
       )}
 
       <Modal open={!!raw} title={`Original reply · ${raw?.vendorName}`} onClose={() => setRaw(null)} wide>
-        <pre className="whitespace-pre-wrap rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-700">{raw?.rawText}</pre>
+        <pre className="whitespace-pre-wrap rounded-lg bg-raised p-3 font-mono text-xs text-ink-soft">{raw?.rawText}</pre>
       </Modal>
 
       <Modal open={!!edit} title={`Verify quote · ${edit?.vendorName}`} onClose={() => setEdit(null)} wide
@@ -80,11 +80,11 @@ export default function QuotesPanel({ detail, onChange }: { detail: PurchaseRequ
         {edit && (
           <div className="space-y-4">
             <ErrorBox message={error} onClose={() => setError(null)} />
-            {edit.rawText && <pre className="whitespace-pre-wrap rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-600">{edit.rawText}</pre>}
+            {edit.rawText && <pre className="whitespace-pre-wrap rounded-lg bg-raised p-3 font-mono text-xs text-ink-soft">{edit.rawText}</pre>}
             <div className="grid gap-3 sm:grid-cols-3">
               {([["unitPrice", "Unit price (₹)"], ["taxPercent", "GST %"], ["deliveryCharge", "Delivery charge (₹)"], ["deliveryDays", "Delivery days"], ["validityDays", "Validity days"]] as const).map(([k, l]) => (
                 <Field key={k} label={l + (edit.lowConfidenceFields.includes(k) ? " ⚠" : "")}>
-                  <input className={`input ${edit.lowConfidenceFields.includes(k) ? "border-amber-400 bg-amber-50" : ""}`} type="number" step="any"
+                  <input className={`input ${edit.lowConfidenceFields.includes(k) ? "border-warn bg-warn/10" : ""}`} type="number" step="any"
                     value={edit[k] as number} onChange={(e) => setEdit({ ...edit, [k]: e.target.value as unknown as number })} />
                 </Field>
               ))}
@@ -108,5 +108,5 @@ export default function QuotesPanel({ detail, onChange }: { detail: PurchaseRequ
 }
 
 function KV({ k, v }: { k: string; v: React.ReactNode }) {
-  return <div><div className="text-[11px] text-slate-400">{k}</div><div className="tabular-nums text-slate-700">{v}</div></div>;
+  return <div><div className="text-[11px] text-ink-mute">{k}</div><div className="tabular-nums text-ink-soft">{v}</div></div>;
 }

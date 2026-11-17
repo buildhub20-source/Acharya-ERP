@@ -46,7 +46,39 @@ export interface Vendor {
   paymentTerms: string | null; leadTimeDays: number | null; minOrderValue: number | null;
   portalEnabled: boolean; lastPortalLogin: string | null;
   performance: VendorPerformance; audit: AuditEntry[]; createdAt: string; rfqEligible: boolean;
+  pendingIdentityChange: IdentityChange | null; catalogue: VendorItem[];
+  inviteSentAt: string | null; submittedAt: string | null; onboardingOpen: boolean;
 }
+export interface IdentityChange { legalName: string; gstin: string | null; pan: string | null; reason: string; requestedBy: string; requestedAt: string }
+export interface VendorItem {
+  itemId: string; itemName: string; unit: string; typicalPrice: number;
+  minOrderQuantity: number | null; leadTimeDays: number | null; updatedOn: string;
+}
+export interface Supplier {
+  vendorId: string; vendorName: string; status: VendorStatus; score: number;
+  typicalPrice: number; minOrderQuantity: number | null; leadTimeDays: number | null;
+}
+export interface RfqHistory {
+  rfqId: string; reference: string; purchaseRequestId: string; purchaseRequestNumber: string | null; title: string | null;
+  sentAt: string; rfqStatus: string; quotedAmount: number | null; rank: number | null; competitors: number; outcome: string;
+}
+export interface VendorActivity {
+  rfqs: RfqHistory[]; orders: PurchaseOrder[]; receipts: GoodsReceipt[];
+  quoted: number; won: number; totalSpend: number; openOrderValue: number; winRatePct: number;
+}
+export interface VendorReports {
+  totalSpend: number;
+  spend: { vendorId: string; vendorName: string; poCount: number; spend: number; sharePct: number; concentrated: boolean }[];
+  coverage: { categoryId: string; categoryName: string; active: number; total: number; belowMinimum: boolean }[];
+  scorecard: {
+    vendorId: string; vendorName: string; status: VendorStatus; score: number; responseRatePct: number; onTimePct: number;
+    qualityPct: number; rating: number; quotesWon: number; avgResponseHours: number;
+  }[];
+  statusCounts: Partial<Record<VendorStatus, number>>; minQuotesRequired: number; concentrationThresholdPct: number;
+}
+export interface OnboardingView { vendor: Vendor; missing: string[]; canSubmit: boolean; editable: boolean }
+export interface OtpSent { channel: string; sentTo: string; expiresInMinutes: number; devCode: string | null }
+export interface InviteLink { link: string; sentTo: string }
 
 export interface PrLine { itemId: string | null; description: string; specs: string; quantity: number; unit: string }
 export interface Approval {

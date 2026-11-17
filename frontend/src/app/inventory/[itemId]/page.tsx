@@ -4,15 +4,16 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { AdjustDialog, IssueDialog } from "@/components/inventory/StockActions";
-import { Card, Empty, ErrorBox, Field, Loading, Modal, PageHeader, Stat, StatusBadge } from "@/components/ui";
+import { Badge, Card, Empty, ErrorBox, Field, Loading, Modal, PageHeader, Stat, StatusBadge } from "@/components/ui";
 import { api } from "@/lib/api";
 import { date, dateTime, label, money } from "@/lib/format";
 import { useAction, useApi } from "@/lib/hooks";
-import type { Item, ItemDetail } from "@/lib/types";
+import type { Item, ItemDetail, Supplier } from "@/lib/types";
 
 export default function StockItemPage() {
   const { itemId } = useParams<{ itemId: string }>();
   const { data: d, error, reload } = useApi<ItemDetail>(`/stock/${itemId}`);
+  const { data: suppliers } = useApi<Supplier[]>(`/items/${itemId}/suppliers`);
   const [issuing, setIssuing] = useState(false);
   const [adjusting, setAdjusting] = useState(false);
   const [settings, setSettings] = useState<{ reorderLevel: string; reorderQuantity: string; location: string } | null>(null);
@@ -51,13 +52,13 @@ export default function StockItemPage() {
       </div>
 
       {d.openRequestId && (
-        <div className="card mb-6 flex flex-wrap items-center justify-between gap-3 border-indigo-200 bg-indigo-50/60 p-4 text-sm text-indigo-900">
+        <div className="card mb-6 flex flex-wrap items-center justify-between gap-3 border-poster/40 bg-poster/10 p-4 text-sm text-poster">
           <span>A purchase request for this item is already in progress.</span>
           <Link href={`/procurement/${d.openRequestId}`} className="btn-secondary">Open {d.openRequestNumber}</Link>
         </div>
       )}
       {i.stockStatus !== "OK" && onOrder === 0 && i.reorderLevel > 0 && !d.openRequestId && (
-        <div className="card mb-6 flex flex-wrap items-center justify-between gap-3 border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-900">
+        <div className="card mb-6 flex flex-wrap items-center justify-between gap-3 border-warn/30 bg-warn/10 p-4 text-sm text-warn">
           <span>Stock is at or below the reorder level and nothing is on order.</span>
           <Link href={`/procurement/new?itemId=${i.id}&qty=${i.reorderQuantity || i.reorderLevel * 2}`} className="btn-primary">Raise purchase request</Link>
         </div>
@@ -65,11 +66,11 @@ export default function StockItemPage() {
 
       {d.openOrders.length > 0 && (
         <Card title="Open purchase orders" className="mb-6" bodyClass="p-0">
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-rule">
             {d.openOrders.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                 <span><b className="font-medium">{o.number}</b> · {o.vendorName} · {o.pendingQuantity} of {o.orderedQuantity} pending · due {date(o.expectedDelivery)}
-                  {o.overdue && <span className="ml-2 text-rose-600">overdue</span>}</span>
+                  {o.overdue && <span className="ml-2 text-danger">overdue</span>}</span>
                 <Link href={`/inventory/receipts/new?po=${o.id}`} className="btn-secondary px-2.5 py-1 text-xs">Receive</Link>
               </li>
             ))}
@@ -77,28 +78,46 @@ export default function StockItemPage() {
         </Card>
       )}
 
+      <Card title="Suppliers" className="mb-6" bodyClass="p-0"
+        actions={<span className="text-xs text-ink-mute">From vendor catalogues</span>}>
+        {!suppliers?.length ? <Empty>No vendor lists this item yet. Map it on a vendor&apos;s Catalogue tab.</Empty> : (
+          <ul className="divide-y divide-rule">
+            {suppliers.map((s, idx) => (
+              <li key={s.vendorId} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
+                <span>
+                  <Link href={`/vendors/${s.vendorId}`} className="font-medium text-ink hover:text-poster">{s.vendorName}</Link>
+                  {idx === 0 && s.status === "ACTIVE" && <span className="ml-2"><Badge tone="green">Best price</Badge></span>}
+                  <span className="ml-2 text-xs text-ink-mute">score {s.score.toFixed(0)}{s.minOrderQuantity ? ` · MOQ ${s.minOrderQuantity}` : ""}{s.leadTimeDays != null ? ` · ${s.leadTimeDays}d` : ""}</span>
+                </span>
+                <span className="flex items-center gap-2"><span className="tabular-nums">{money(s.typicalPrice)}</span>{s.status !== "ACTIVE" && <StatusBadge status={s.status} />}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
       <Card title="Stock ledger" bodyClass="p-0">
         {d.movements.length === 0 ? <Empty>No movements yet.</Empty> : (
           <div className="overflow-x-auto">
             <table className="min-w-full">
-              <thead className="bg-slate-50">
+              <thead className="bg-raised">
                 <tr><th className="th">When</th><th className="th">Type</th><th className="th">Reference</th><th className="th">Details</th>
                   <th className="th text-right">In / out</th><th className="th text-right">Balance</th><th className="th text-right">Cost</th></tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-rule">
                 {d.movements.map((m) => (
                   <tr key={m.id}>
-                    <td className="td whitespace-nowrap text-xs text-slate-500">{dateTime(m.at)}</td>
+                    <td className="td whitespace-nowrap text-xs text-ink-mute">{dateTime(m.at)}</td>
                     <td className="td"><StatusBadge status={m.type} /></td>
                     <td className="td text-xs">
-                      {m.type === "RECEIPT" && m.referenceId ? <Link className="text-indigo-600 hover:underline" href={`/inventory/receipts/${m.referenceId}`}>{m.reference}</Link> : m.reference}
+                      {m.type === "RECEIPT" && m.referenceId ? <Link className="text-poster hover:underline" href={`/inventory/receipts/${m.referenceId}`}>{m.reference}</Link> : m.reference}
                     </td>
-                    <td className="td text-xs text-slate-600">
-                      {m.department && <div className="font-medium text-slate-700">{m.department}{m.issuedTo ? ` · ${m.issuedTo}` : ""}</div>}
+                    <td className="td text-xs text-ink-soft">
+                      {m.department && <div className="font-medium text-ink-soft">{m.department}{m.issuedTo ? ` · ${m.issuedTo}` : ""}</div>}
                       {m.reason}
-                      <div className="text-slate-400">{m.by}</div>
+                      <div className="text-ink-mute">{m.by}</div>
                     </td>
-                    <td className={`td text-right font-semibold tabular-nums ${m.quantity > 0 ? "text-emerald-700" : "text-rose-600"}`}>{m.quantity > 0 ? "+" : ""}{m.quantity}</td>
+                    <td className={`td text-right font-semibold tabular-nums ${m.quantity > 0 ? "text-ok" : "text-danger"}`}>{m.quantity > 0 ? "+" : ""}{m.quantity}</td>
                     <td className="td text-right tabular-nums">{m.balanceAfter}</td>
                     <td className="td text-right tabular-nums text-xs">{money(m.unitCost)}</td>
                   </tr>
@@ -122,7 +141,7 @@ export default function StockItemPage() {
           </div>
         )}
       </Modal>
-      <p className="mt-4 text-xs text-slate-400">Last purchase price {money(i.lastPurchasePrice)} · {label(i.stockStatus)}</p>
+      <p className="mt-4 text-xs text-ink-mute">Last purchase price {money(i.lastPurchasePrice)} · {label(i.stockStatus)}</p>
     </>
   );
 }

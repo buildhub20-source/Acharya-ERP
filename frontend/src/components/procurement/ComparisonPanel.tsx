@@ -40,24 +40,24 @@ export default function ComparisonPanel({ detail, onDone }: { detail: PurchaseRe
 
   return (
     <Card title="Quote comparison"
-      actions={<span className="text-xs text-slate-500">{c.quotesReceived} of {c.vendorsInvited} vendors quoted · avg {money(c.averageAmount, true)}</span>}
+      actions={<span className="text-xs text-ink-mute">{c.quotesReceived} of {c.vendorsInvited} vendors quoted · avg {money(c.averageAmount, true)}</span>}
       bodyClass="p-0">
       <div className="px-5 pt-4">
         <ErrorBox message={error} onClose={() => setError(null)} />
         {!c.meetsMinQuotes && (
-          <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <p className="mb-3 rounded-lg bg-warn/10 px-3 py-2 text-xs text-warn">
             Only {c.quotesReceived} quote(s) received; policy minimum is {c.minQuotesRequired}. Proceeding needs a justification.
           </p>
         )}
         {sentBack && pr.status === "SENT_BACK" && (
-          <p className="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800">
+          <p className="mb-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
             <b>Sent back by {sentBack.approver}:</b> {sentBack.comments}
           </p>
         )}
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full">
-          <thead className="bg-slate-50">
+          <thead className="bg-raised">
             <tr>
               {reviewOpen && <th className="th w-10" />}
               <th className="th">#</th><th className="th">Vendor</th><th className="th text-right">Unit</th><th className="th text-right">Tax</th>
@@ -65,14 +65,14 @@ export default function ComparisonPanel({ detail, onDone }: { detail: PurchaseRe
               <th className="th">Lead</th><th className="th">Terms</th><th className="th">Vendor rating</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-rule">
             {c.rows.map((r) => {
               const q = r.quote;
               const isSel = selected === q.id;
               const isChosen = pr.selectedQuoteId === q.id;
               return (
                 <tr key={q.id}
-                  className={`${r.l1 ? "bg-emerald-50/60" : ""} ${reviewOpen ? "cursor-pointer hover:bg-indigo-50/50" : ""} ${isSel && reviewOpen ? "outline-2 -outline-offset-2 outline-indigo-400" : ""}`}
+                  className={`${r.l1 ? "bg-ok/10" : ""} ${reviewOpen ? "cursor-pointer hover:bg-poster/10" : ""} ${isSel && reviewOpen ? "outline-2 -outline-offset-2 outline-poster" : ""}`}
                   onClick={() => reviewOpen && setSelected(q.id)}>
                   {reviewOpen && <td className="td"><input type="radio" name="quote" checked={isSel} onChange={() => setSelected(q.id)} aria-label={`Select ${q.vendorName}`} /></td>}
                   <td className="td font-semibold">{r.rank}</td>
@@ -87,10 +87,10 @@ export default function ComparisonPanel({ detail, onDone }: { detail: PurchaseRe
                     </div>
                   </td>
                   <td className="td text-right tabular-nums">{money(q.unitPrice)}</td>
-                  <td className="td text-right tabular-nums">{money(q.taxAmount)}<div className="text-[11px] text-slate-400">{q.taxPercent}%</div></td>
+                  <td className="td text-right tabular-nums">{money(q.taxAmount)}<div className="text-[11px] text-ink-mute">{q.taxPercent}%</div></td>
                   <td className="td text-right tabular-nums">{q.deliveryCharge ? money(q.deliveryCharge) : "Free"}</td>
                   <td className="td text-right font-semibold tabular-nums">{money(q.landedCost)}</td>
-                  <td className="td tabular-nums">{r.l1 ? "—" : <span className="text-rose-600">+{r.diffFromL1Pct}%</span>}</td>
+                  <td className="td tabular-nums">{r.l1 ? "—" : <span className="text-danger">+{r.diffFromL1Pct}%</span>}</td>
                   <td className="td">{q.deliveryDays}d</td>
                   <td className="td text-xs">{terms(q.paymentTerms)}</td>
                   <td className="td"><Stars value={r.vendorRating} /></td>
@@ -101,13 +101,13 @@ export default function ComparisonPanel({ detail, onDone }: { detail: PurchaseRe
         </table>
       </div>
 
-      <div className="border-t border-slate-100 p-5">
-        <div className={`mb-4 rounded-lg px-3 py-2 text-sm ${policy.requiresOfficial ? "bg-indigo-50 text-indigo-900" : "bg-emerald-50 text-emerald-900"}`}>
+      <div className="border-t border-rule p-5">
+        <div className={`mb-4 rounded-lg px-3 py-2 text-sm ${policy.requiresOfficial ? "bg-poster/10 text-poster" : "bg-ok/10 text-ok"}`}>
           <b>Approval route:</b> {policy.reason}. {policy.requiresOfficial ? "Manager approval → higher official sign-off → PO." : "Manager approval issues the PO directly."}
         </div>
 
         {reviewOpen && (
-          user.role === "OFFICIAL" ? <p className="text-sm text-slate-500">Waiting for the store manager to pick a vendor.</p> : (
+          user.role === "OFFICIAL" ? <p className="text-sm text-ink-mute">Waiting for the store manager to pick a vendor.</p> : (
             <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
               <Field label={needsJustification ? "Justification (required)" : "Notes (optional)"}
                 hint={chosen && !chosen.l1 ? "You are not picking the lowest quote: explain why (quality, delivery time, terms…)" : undefined}>
@@ -128,7 +128,7 @@ export default function ComparisonPanel({ detail, onDone }: { detail: PurchaseRe
         {approvalOpen && (
           <div>
             {pr.selectionJustification && (
-              <p className="mb-3 text-sm text-slate-700"><b>Manager&apos;s justification:</b> {pr.selectionJustification}</p>
+              <p className="mb-3 text-sm text-ink-soft"><b>Manager&apos;s justification:</b> {pr.selectionJustification}</p>
             )}
             {user.role === "OFFICIAL" || user.role === "ADMIN" ? (
               <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -142,7 +142,7 @@ export default function ComparisonPanel({ detail, onDone }: { detail: PurchaseRe
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-slate-500">Awaiting second-level sign-off. Switch to <b>Dr. Meenakshi (Principal)</b> in the top bar to act.</p>
+              <p className="text-sm text-ink-mute">Awaiting second-level sign-off. Switch to <b>Dr. Meenakshi (Principal)</b> in the top bar to act.</p>
             )}
           </div>
         )}

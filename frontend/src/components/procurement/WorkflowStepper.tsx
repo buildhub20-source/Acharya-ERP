@@ -33,32 +33,32 @@ export default function WorkflowStepper({ status, skipOfficial, poStatus }: { st
           const active = s.n === current;
           const skipped = s.n === 9 && skipOfficial && current > 9;
           const tone =
-            s.who === "people" ? "bg-indigo-600 ring-indigo-200" : s.who === "system" ? "bg-emerald-600 ring-emerald-200" : "bg-slate-700 ring-slate-200";
+            s.who === "people" ? "bg-poster text-poster-ink ring-poster/30" : s.who === "system" ? "bg-ok text-wall ring-ok/30" : "bg-ink text-wall ring-ink/30";
           return (
             <li key={s.n} className="flex flex-1 flex-col items-center text-center">
               <div className="flex w-full items-center">
-                <div className={`h-0.5 flex-1 ${i === 0 ? "invisible" : done || active ? "bg-slate-400" : "bg-slate-200"}`} />
+                <div className={`h-0.5 flex-1 ${i === 0 ? "invisible" : done || active ? "bg-ink-faint" : "bg-rule"}`} />
                 <div
-                  className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-semibold text-white ${
-                    done ? tone : active ? `${tone} ring-4` : "bg-slate-200 text-slate-500"
+                  className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold ${
+                    done ? tone : active ? `${tone} ring-4` : "bg-raised-2 text-ink-mute ring-1 ring-rule"
                   } ${skipped ? "opacity-40" : ""}`}
                 >
                   {done ? (skipped ? "–" : "✓") : s.n}
                 </div>
-                <div className={`h-0.5 flex-1 ${i === STEPS.length - 1 ? "invisible" : done ? "bg-slate-400" : "bg-slate-200"}`} />
+                <div className={`h-0.5 flex-1 ${i === STEPS.length - 1 ? "invisible" : done ? "bg-ink-faint" : "bg-rule"}`} />
               </div>
-              <div className={`mt-1.5 px-1 text-[11px] leading-tight ${active ? "font-semibold text-slate-900" : "text-slate-500"}`}>
+              <div className={`mt-1.5 px-1 text-[11px] leading-tight ${active ? "font-semibold text-ink" : "text-ink-mute"}`}>
                 {s.label}
-                {skipped && <div className="text-[10px] text-slate-400">not required</div>}
+                {skipped && <div className="text-[10px] text-ink-mute">not required</div>}
               </div>
             </li>
           );
         })}
       </ol>
-      <div className="mt-3 flex gap-4 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-indigo-600" />People (manager, officials)</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-600" />System automated</span>
-        {status === "CANCELLED" && <span className="font-medium text-rose-600">Request cancelled</span>}
+      <div className="mt-3 flex gap-4 border-t border-rule pt-2 text-[11px] text-ink-mute">
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-poster" />People (manager, officials)</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-ok" />System automated</span>
+        {status === "CANCELLED" && <span className="font-medium text-danger">Request cancelled</span>}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 package com.schoolerp.inventory.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +39,20 @@ public class Vendor {
     private Integer leadTimeDays;
     private Integer minOrderValue;
 
+    /** Proposed legal-identity change (legal name / GSTIN / PAN) awaiting re-verification. */
+    private IdentityChange pendingIdentityChange;
+
+    /** Items this vendor supplies, with typical price and minimum order (UC-3). */
+    private List<VendorItem> catalogue = new ArrayList<>();
+
     private boolean portalEnabled;
     private LocalDateTime lastPortalLogin;
+
+    /** Secret token in the onboarding link. Never serialised; admins get the link from a dedicated endpoint. */
+    @JsonIgnore
+    private String onboardingToken;
+    private LocalDateTime inviteSentAt;
+    private LocalDateTime submittedAt;
 
     private VendorPerformance performance = new VendorPerformance();
     private List<AuditEntry> audit = new ArrayList<>();
@@ -47,6 +60,12 @@ public class Vendor {
 
     public boolean isRfqEligible() {
         return status == Enums.VendorStatus.ACTIVE;
+    }
+
+    /** Onboarding is open while the vendor is still completing or correcting its profile. */
+    public boolean isOnboardingOpen() {
+        return status == Enums.VendorStatus.INVITED || status == Enums.VendorStatus.REGISTERED
+                || status == Enums.VendorStatus.SENT_BACK;
     }
 
     public String getDisplayName() {

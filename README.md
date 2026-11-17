@@ -30,7 +30,10 @@ Use the **"Acting as"** switcher in the top bar to change role:
 | Area | Pages | Covers |
 |---|---|---|
 | Dashboard | `/` | KPIs, pipeline by step, items needing attention, activity, top vendors |
-| Vendors | `/vendors`, `/vendors/new`, `/vendors/[id]`, `/vendors/[id]/edit` | Onboarding (full or quick-invite), approve / send back / reject, suspend / blacklist / reactivate, documents and verification, bank-change approval, ratings and scorecard, per-vendor messages, audit log |
+| Vendors | `/vendors`, `/vendors/new`, `/vendors/[id]`, `/vendors/[id]/edit` | Directory with filters and CSV export; add or invite; verify / send back / reject; suspend / blacklist / reactivate; tabs for overview, **catalogue** (items supplied with typical price, MOQ, lead time), **activity** (RFQs, quotes and rank, POs, deliveries), documents, scorecard, messages, audit log; bank-change and **legal-change re-verification** approvals; resend onboarding link |
+| Categories | `/vendors/categories` | Create / rename / delete (only when unused); active-vendor coverage against the 3-quote policy |
+| Vendor reports | `/vendors/reports` | Spend by vendor with dependency (>40%) flag, category coverage, ranked scorecard, status breakdown, CSV export |
+| Supplier onboarding | `/portal/register`, `/portal/register/[token]` | Public "become a supplier" form; 5-step wizard from the personal invite link: business, contacts with OTP verification, bank and terms, documents, review and submit |
 | Compliance | `/vendors/compliance` | Expiring docs, onboarding queue, pending bank changes, blocked vendors |
 | Procurement | `/procurement`, `/procurement/new`, `/procurement/[id]` | The full 10-step flow: create → select vendors → generate and send RFQ → track and remind → parse replies (text / PDF / image / voice) → compare (L1 by landed cost) → manager review → official approval → PO |
 | Approvals | `/approvals` | Level-1 and level-2 queues |
@@ -51,6 +54,14 @@ Use the **"Acting as"** switcher in the top bar to change role:
 - Above ₹10,000 or over budget, a second-level approval is needed (`app.approval.official-threshold`).
 - Reject all → new RFQ round. Official "send back" → returns to manager review. Official "reject" → cancelled.
 - Auto-reminder sweep every 10 min (24h interval, max 3), after which the vendor is marked No Response.
+- Vendors can only be approved after the profile is submitted. Submission needs GSTIN, PAN, full address, a category,
+  a contact verified by OTP, bank details and GST + PAN documents. Contacts can't mark themselves verified; changing a
+  verified number or email clears its verification.
+- Onboarding links carry a random secret token (never returned by the vendor APIs). OTPs expire in 10 minutes and lock
+  after 5 wrong tries; in mock mode (`app.mock-mode=true`) the code is shown on screen because nothing is really sent.
+- Legal name / GSTIN / PAN of an approved vendor change only through an approved re-verification request; a new GSTIN or
+  PAN resets that certificate to pending.
+- A catalogue item must belong to one of the vendor's categories; vendors listing the requested item are suggested first for RFQs.
 - GRN: accepted units cannot exceed what is pending on the PO; rejected units need a reason and stay pending
   (the vendor is asked to replace them); a fully received PO cannot be received again or marked dispatched.
 - Invoice matches when it is within 1% of accepted qty × PO landed unit cost.
@@ -74,7 +85,10 @@ Key endpoints: `GET/POST /api/vendors`, `POST /api/vendors/{id}/status`, `POST /
 `POST /api/purchase-requests/{id}/rfqs`, `/replies`, `/quotes`, `/close-quotes`, `/review`, `/approval`,
 `/api/portal/vendors/{vendorId}/…`, `GET /api/dashboard`, `GET /api/outbox`,
 `GET /api/stock`, `GET /api/stock/{itemId}`, `POST /api/stock/issues`, `POST /api/stock/adjustments`,
-`GET /api/stock/movements`, `GET /api/grns/pending`, `GET /api/grns/receivable/{poId}`, `POST /api/grns`.
+`GET /api/stock/movements`, `GET /api/vendors/reports`, `GET /api/vendors/{id}/activity`,
+`POST /api/vendors/{id}/invite`, `POST /api/vendors/{id}/identity-change[/approve|/reject]`, `POST|DELETE /api/vendors/{id}/catalogue`,
+`GET /api/items/{itemId}/suppliers`, `POST|PUT|DELETE /api/categories`, `POST /api/portal/register`,
+`GET|PUT /api/portal/onboarding/{token}` (+ `/otp`, `/otp/verify`, `/documents`, `/submit`), `GET /api/grns/pending`, `GET /api/grns/receivable/{poId}`, `POST /api/grns`.
 
 ## Moving to Supabase later
 1. Create tables mirroring `model/` (vendors, vendor_contacts, vendor_documents, purchase_requests,
@@ -90,6 +104,7 @@ Key endpoints: `GET/POST /api/vendors`, `POST /api/vendors/{id}/status`, `POST /
 
 ## Known limits (v1)
 - One line item per purchase request in the UI (the model already supports several lines; quotes are priced per unit).
+- One login per vendor (no separate owner / sales-rep users yet); document files are not stored, only their details.
 - Single store location; no size/colour variants per item yet (e.g. shoe sizes are tracked in the specs text, not as separate stock).
 - Rejected units are not posted as a separate "return to vendor" movement, since they never enter stock.
 - Payment release to Accounts is not built; the GRN only records whether the invoice matches.

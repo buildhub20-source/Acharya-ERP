@@ -23,24 +23,24 @@ export default function OutboxPage() {
       <div className="mb-4 flex gap-1.5">
         {(["", "EMAIL", "WHATSAPP", "SMS", "PORTAL"] as const).map((c) => (
           <button key={c || "all"} onClick={() => setChannel(c)}
-            className={`rounded-full px-3 py-1 text-xs ${channel === c ? "bg-indigo-600 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"}`}>
+            className={`rounded-full px-3 py-1 text-xs ${channel === c ? "bg-poster font-semibold text-poster-ink" : "bg-panel text-ink-soft ring-1 ring-rule"}`}>
             {c ? c[0] + c.slice(1).toLowerCase() : "All"}
           </button>
         ))}
       </div>
       <Card bodyClass="p-0">
         {rows.length === 0 ? <Empty>No messages.</Empty> : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-rule">
             {rows.map((m, i) => (
-              <li key={i} className="cursor-pointer px-5 py-3 hover:bg-slate-50" onClick={() => setOpen(open === i ? null : i)}>
+              <li key={i} className="cursor-pointer px-5 py-3 hover:bg-raised" onClick={() => setOpen(open === i ? null : i)}>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <ChannelChip channel={m.channel} />
-                  <Link href={`/vendors/${m.vendorId}`} onClick={(e) => e.stopPropagation()} className="font-medium hover:text-indigo-600">{m.vendorName}</Link>
-                  <span className="text-xs text-slate-400">{m.to}</span>
-                  <span className="text-slate-600">· {m.subject}</span>
-                  <span className="ml-auto text-xs text-slate-400">{dateTime(m.at)}</span>
+                  <Link href={`/vendors/${m.vendorId}`} onClick={(e) => e.stopPropagation()} className="font-medium hover:text-poster">{m.vendorName}</Link>
+                  <span className="text-xs text-ink-mute">{m.to}</span>
+                  <span className="text-ink-soft">· {m.subject}</span>
+                  <span className="ml-auto text-xs text-ink-mute">{dateTime(m.at)}</span>
                 </div>
-                {open === i && <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 font-sans text-xs text-slate-600">{m.body}</pre>}
+                {open === i && <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-raised p-3 font-sans text-xs text-ink-soft">{m.body}</pre>}
               </li>
             ))}
           </ul>

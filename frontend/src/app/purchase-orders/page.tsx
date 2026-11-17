@@ -18,21 +18,21 @@ export default function PurchaseOrdersPage() {
         {data.length === 0 ? <Empty>No purchase orders yet.</Empty> : (
           <div className="overflow-x-auto">
             <table className="min-w-full">
-              <thead className="bg-slate-50">
+              <thead className="bg-raised">
                 <tr><th className="th">PO</th><th className="th">Vendor</th><th className="th text-right">Amount</th><th className="th">Terms</th><th className="th">Received</th><th className="th">Expected</th><th className="th">Status</th><th className="th" /></tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-rule">
                 {data.map((p) => (
                   <tr key={p.id}>
                     <td className="td">
                       <div className="font-medium">{p.number}</div>
-                      <Link href={`/procurement/${p.purchaseRequestId}`} className="text-xs text-indigo-600 hover:underline">{p.purchaseRequestNumber} · {p.title}</Link>
+                      <Link href={`/procurement/${p.purchaseRequestId}`} className="text-xs text-poster hover:underline">{p.purchaseRequestNumber} · {p.title}</Link>
                     </td>
-                    <td className="td"><Link href={`/vendors/${p.vendorId}`} className="hover:text-indigo-600">{p.vendorName}</Link></td>
+                    <td className="td"><Link href={`/vendors/${p.vendorId}`} className="hover:text-poster">{p.vendorName}</Link></td>
                     <td className="td text-right font-medium tabular-nums">{money(p.amount)}</td>
                     <td className="td">{terms(p.paymentTerms)}</td>
-                    <td className="td tabular-nums">{p.acceptedQuantity}/{p.orderedQuantity} {p.unit}{p.rejectedQuantity > 0 && <div className="text-[11px] text-rose-600">{p.rejectedQuantity} rejected</div>}</td>
-                    <td className="td">{date(p.expectedDelivery)}{p.overdue && <div className="text-[11px] text-rose-600">Overdue</div>}</td>
+                    <td className="td tabular-nums">{p.acceptedQuantity}/{p.orderedQuantity} {p.unit}{p.rejectedQuantity > 0 && <div className="text-[11px] text-danger">{p.rejectedQuantity} rejected</div>}</td>
+                    <td className="td">{date(p.expectedDelivery)}{p.overdue && <div className="text-[11px] text-danger">Overdue</div>}</td>
                     <td className="td"><StatusBadge status={p.status} /></td>
                     <td className="td text-right">{p.pendingQuantity > 0 && <Link href={`/inventory/receipts/new?po=${p.id}`} className="btn-secondary px-2.5 py-1 text-xs">Receive</Link>}</td>
                   </tr>

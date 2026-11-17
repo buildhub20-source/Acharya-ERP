@@ -74,10 +74,10 @@ export default function VendorForm({ vendor }: { vendor?: Vendor }) {
       <ErrorBox message={error} onClose={() => setError(null)} />
 
       {!editing && (
-        <div className="flex gap-2 rounded-lg bg-slate-100 p-1 text-sm sm:w-fit">
+        <div className="flex gap-2 rounded-lg bg-raised-2 p-1 text-sm sm:w-fit">
           {(["full", "invite"] as const).map((m) => (
             <button key={m} type="button" onClick={() => setMode(m)}
-              className={`rounded-md px-4 py-1.5 ${mode === m ? "bg-white font-medium shadow-sm" : "text-slate-600"}`}>
+              className={`rounded-md px-4 py-1.5 ${mode === m ? "bg-panel font-medium shadow-sm" : "text-ink-soft"}`}>
               {m === "full" ? "Register with full details" : "Quick invite (vendor completes on portal)"}
             </button>
           ))}
@@ -118,7 +118,7 @@ export default function VendorForm({ vendor }: { vendor?: Vendor }) {
             return (
               <button key={c.id} type="button" title={c.description}
                 onClick={() => setCats((p) => (on ? p.filter((x) => x !== c.id) : [...p, c.id]))}
-                className={`rounded-full border px-3 py-1.5 text-sm transition ${on ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
+                className={`rounded-full border px-3 py-1.5 text-sm transition ${on ? "border-poster bg-poster/10 text-poster" : "border-rule-strong text-ink-soft hover:bg-raised"}`}>
                 {on ? "✓ " : ""}{c.name}
               </button>
             );
@@ -141,11 +141,11 @@ export default function VendorForm({ vendor }: { vendor?: Vendor }) {
                   {["WHATSAPP", "EMAIL", "SMS", "PORTAL"].map((ch) => <option key={ch} value={ch}>{ch[0] + ch.slice(1).toLowerCase()}</option>)}
                 </select>
               </Field>
-              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 lg:col-span-6">
+              <div className="flex flex-wrap items-center gap-4 text-xs text-ink-soft lg:col-span-6">
                 <label className="flex items-center gap-1.5"><input type="checkbox" checked={c.phoneVerified} onChange={(e) => setContact(i, "phoneVerified", e.target.checked)} /> Phone OTP verified</label>
                 <label className="flex items-center gap-1.5"><input type="checkbox" checked={c.emailVerified} onChange={(e) => setContact(i, "emailVerified", e.target.checked)} /> Email verified</label>
                 {contacts.length > 1 && (
-                  <button type="button" className="text-rose-600 hover:underline" onClick={() => setContacts((cs) => cs.filter((_, j) => j !== i))}>Remove</button>
+                  <button type="button" className="text-danger hover:underline" onClick={() => setContacts((cs) => cs.filter((_, j) => j !== i))}>Remove</button>
                 )}
               </div>
             </div>
@@ -157,7 +157,7 @@ export default function VendorForm({ vendor }: { vendor?: Vendor }) {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card title="Bank details">
             {editing && vendor.bank && (
-              <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <p className="mb-3 rounded-lg bg-warn/10 px-3 py-2 text-xs text-warn">
                 Current account {vendor.bank.maskedAccountNumber}. Entering a new account on an approved vendor needs approver
                 sign-off, and payments are held until then.
               </p>
@@ -178,7 +178,7 @@ export default function VendorForm({ vendor }: { vendor?: Vendor }) {
               </Field>
               <Field label="Lead time (days)"><input className="input" type="number" value={f.leadTimeDays} onChange={(e) => set("leadTimeDays", e.target.value)} /></Field>
               <Field label="Minimum order value (₹)"><input className="input" type="number" value={f.minOrderValue} onChange={(e) => set("minOrderValue", e.target.value)} /></Field>
-              <label className="flex items-center gap-2 pt-6 text-sm text-slate-700">
+              <label className="flex items-center gap-2 pt-6 text-sm text-ink-soft">
                 <input type="checkbox" checked={f.portalEnabled} onChange={(e) => set("portalEnabled", e.target.checked)} /> Vendor portal access
               </label>
             </div>

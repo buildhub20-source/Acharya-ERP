@@ -51,7 +51,7 @@ function ReceiveForm() {
   return (
     <>
       <PageHeader back={{ href: "/inventory/receipts", label: "Goods receipt" }} title={`Receive goods · ${po.number}`}
-        subtitle={<>{po.vendorName} · <Link className="text-indigo-600 hover:underline" href={`/procurement/${po.purchaseRequestId}`}>{po.purchaseRequestNumber}</Link> · {po.title}</>} />
+        subtitle={<>{po.vendorName} · <Link className="text-poster hover:underline" href={`/procurement/${po.purchaseRequestId}`}>{po.purchaseRequestNumber}</Link> · {po.title}</>} />
       <ErrorBox message={act.error} onClose={() => act.setError(null)} />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
@@ -63,23 +63,23 @@ function ReceiveForm() {
               <Mini k="Pending" v={po.pendingQuantity} strong />
               <Mini k="Unit cost (landed)" v={money(po.unitCost)} />
             </div>
-            <p className="mb-4 text-sm text-slate-700"><b>{po.description}</b>{data.item ? <span className="text-slate-500"> · {data.item.sku}</span> : <Badge tone="purple">New item: will be added to the item master</Badge>}</p>
+            <p className="mb-4 text-sm text-ink-soft"><b>{po.description}</b>{data.item ? <span className="text-ink-mute"> · {data.item.sku}</span> : <Badge tone="purple">New item: will be added to the item master</Badge>}</p>
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label="Received in this delivery *"><input className="input" type="number" min={0} value={form.received} onChange={(e) => set("received", e.target.value)} /></Field>
               <Field label="Rejected on inspection" hint="Damaged, wrong size, not to spec"><input className="input" type="number" min={0} max={received} value={form.rejected} onChange={(e) => set("rejected", e.target.value)} /></Field>
-              <div className="rounded-lg bg-emerald-50 p-3">
-                <div className="text-xs text-emerald-700">Accepted into stock</div>
-                <div className="text-2xl font-semibold tabular-nums text-emerald-800">{accepted} <span className="text-sm font-normal">{po.unit}</span></div>
+              <div className="rounded-lg bg-ok/10 p-3">
+                <div className="text-xs text-ok">Accepted into stock</div>
+                <div className="text-2xl font-semibold tabular-nums text-ok">{accepted} <span className="text-sm font-normal">{po.unit}</span></div>
               </div>
               {rejected > 0 && (
                 <Field label="Rejection reason *" className="sm:col-span-3"><input className="input" value={form.rejectionReason} onChange={(e) => set("rejectionReason", e.target.value)} placeholder="e.g. 3 pairs size 7 had torn stitching" /></Field>
               )}
             </div>
-            {over && <p className="mt-3 text-sm text-rose-600">Only {po.pendingQuantity} {po.unit} are pending. Return the extra {accepted - po.pendingQuantity} to the vendor.</p>}
+            {over && <p className="mt-3 text-sm text-danger">Only {po.pendingQuantity} {po.unit} are pending. Return the extra {accepted - po.pendingQuantity} to the vendor.</p>}
             {!over && accepted > 0 && accepted < po.pendingQuantity && (
-              <p className="mt-3 text-xs text-amber-700">Partial delivery: {po.pendingQuantity - accepted} {po.unit} will stay pending on this PO.</p>
+              <p className="mt-3 text-xs text-warn">Partial delivery: {po.pendingQuantity - accepted} {po.unit} will stay pending on this PO.</p>
             )}
-            {rejected > 0 && <p className="mt-2 text-xs text-slate-500">The vendor is notified to collect rejected units and send replacements. They stay pending on the PO.</p>}
+            {rejected > 0 && <p className="mt-2 text-xs text-ink-mute">The vendor is notified to collect rejected units and send replacements. They stay pending on the PO.</p>}
           </Card>
 
           <Card title="Delivery & invoice">
@@ -105,7 +105,7 @@ function ReceiveForm() {
               <li className="flex justify-between gap-2"><span>Invoice match (3-way)</span>{invoiceOk == null ? <StatusBadge status="NOT_PROVIDED" /> : invoiceOk ? <StatusBadge status="MATCHED" /> : <StatusBadge status="MISMATCH" />}</li>
               <li className="flex justify-between gap-2"><span>Stock after receipt</span><b className="tabular-nums">{(data.item?.onHand ?? 0) + accepted} {po.unit}</b></li>
             </ul>
-            <p className="mt-3 text-xs text-slate-500">On-time and acceptance rate feed the vendor&apos;s performance score.</p>
+            <p className="mt-3 text-xs text-ink-mute">On-time and acceptance rate feed the vendor&apos;s performance score.</p>
           </Card>
           <button className="btn-success w-full" disabled={act.busy || received <= 0 || rejected > received || over || (rejected > 0 && !form.rejectionReason.trim())} onClick={submit}>
             {act.busy ? "Posting…" : `Post GRN · ${accepted} into stock`}
@@ -114,7 +114,7 @@ function ReceiveForm() {
             <Card title="Earlier receipts on this PO">
               <ul className="space-y-2 text-xs">
                 {data.receipts.map((g) => (
-                  <li key={g.id}><Link className="text-indigo-600 hover:underline" href={`/inventory/receipts/${g.id}`}>{g.number}</Link> · {date(g.receivedDate)} · {g.acceptedQuantity} accepted{g.rejectedQuantity ? `, ${g.rejectedQuantity} rejected` : ""}</li>
+                  <li key={g.id}><Link className="text-poster hover:underline" href={`/inventory/receipts/${g.id}`}>{g.number}</Link> · {date(g.receivedDate)} · {g.acceptedQuantity} accepted{g.rejectedQuantity ? `, ${g.rejectedQuantity} rejected` : ""}</li>
                 ))}
               </ul>
             </Card>
@@ -126,7 +126,7 @@ function ReceiveForm() {
 }
 
 function Mini({ k, v, strong }: { k: string; v: React.ReactNode; strong?: boolean }) {
-  return <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">{k}</div><div className={`tabular-nums ${strong ? "text-lg font-semibold text-slate-900" : "text-slate-700"}`}>{v}</div></div>;
+  return <div className="rounded-lg bg-raised p-3"><div className="text-xs text-ink-mute">{k}</div><div className={`tabular-nums ${strong ? "text-lg font-semibold text-ink" : "text-ink-soft"}`}>{v}</div></div>;
 }
 
 export default function ReceivePage() {

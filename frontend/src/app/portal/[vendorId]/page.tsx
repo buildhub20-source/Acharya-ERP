@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { GradusMark } from "@/components/Brand";
 import { Card, ChannelChip, Empty, ErrorBox, Field, Loading, Modal, StatusBadge } from "@/components/ui";
 import { api } from "@/lib/api";
 import { date, dateTime, label, money, terms } from "@/lib/format";
@@ -60,14 +61,14 @@ export default function VendorPortal() {
   const openCount = rfqs?.filter((r) => r.open).length ?? 0;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-wall">
+      <header className="border-b border-rule bg-panel">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-sm font-bold text-white">G</div>
+            <GradusMark size={32} />
             <div>
-              <div className="text-sm font-semibold">Greenfield Vendor Portal</div>
-              <div className="text-xs text-slate-500">{vendor.displayName} · {vendor.code}</div>
+              <div className="text-sm font-semibold text-ink">GradusMind Vendor Portal · Greenfield Public School</div>
+              <div className="text-xs text-ink-mute">{vendor.displayName} · {vendor.code}</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -80,12 +81,12 @@ export default function VendorPortal() {
       <main className="mx-auto max-w-6xl px-4 py-6">
         <ErrorBox message={act.error} onClose={() => act.setError(null)} />
         {vendor.status === "SUSPENDED" && (
-          <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          <div className="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             Your account is suspended: {vendor.statusReason}. Upload a renewed document under <b>Documents</b> to resume receiving RFQs.
           </div>
         )}
         {vendor.pendingBankChange && (
-          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="mb-4 rounded-lg border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-warn">
             Your bank change to {vendor.pendingBankChange.maskedAccountNumber} is being verified by the school. Payments are on hold until then.
           </div>
         )}
@@ -97,11 +98,11 @@ export default function VendorPortal() {
           <MiniStat k="Response rate" v={`${vendor.performance.responseRatePct}%`} />
         </div>
 
-        <div className="mb-5 flex gap-1 border-b border-slate-200">
+        <div className="mb-5 flex gap-1 border-b border-rule">
           {TABS.map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`border-b-2 px-4 py-2.5 text-sm ${tab === t ? "border-emerald-600 font-medium text-emerald-700" : "border-transparent text-slate-500"}`}>
-              {t}{t === "RFQs" && openCount > 0 && <span className="ml-1.5 rounded-full bg-emerald-600 px-1.5 text-[10px] text-white">{openCount}</span>}
+              className={`border-b-2 px-4 py-2.5 text-sm ${tab === t ? "border-poster font-semibold text-poster" : "border-transparent text-ink-mute"}`}>
+              {t}{t === "RFQs" && openCount > 0 && <span className="ml-1.5 rounded-full bg-poster px-1.5 text-[10px] font-bold text-poster-ink">{openCount}</span>}
             </button>
           ))}
         </div>
@@ -112,24 +113,24 @@ export default function VendorPortal() {
               <Card key={r.rfq.id}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2"><span className="font-semibold text-slate-900">{r.title}</span><StatusBadge status={r.outcome} /></div>
-                    <div className="mt-0.5 text-xs text-slate-500">{r.rfq.reference} · deliver by {date(r.dueDate)} to {r.deliveryLocation} · reply by {dateTime(r.quoteDeadline)}</div>
-                    <ul className="mt-2 text-sm text-slate-700">
-                      {r.lines.map((l, i) => <li key={i}>• {l.description} — <b>{l.quantity} {l.unit}</b>{l.specs && <span className="text-slate-500"> ({l.specs})</span>}</li>)}
+                    <div className="flex items-center gap-2"><span className="font-semibold text-ink">{r.title}</span><StatusBadge status={r.outcome} /></div>
+                    <div className="mt-0.5 text-xs text-ink-mute">{r.rfq.reference} · deliver by {date(r.dueDate)} to {r.deliveryLocation} · reply by {dateTime(r.quoteDeadline)}</div>
+                    <ul className="mt-2 text-sm text-ink-soft">
+                      {r.lines.map((l, i) => <li key={i}>• {l.description} — <b>{l.quantity} {l.unit}</b>{l.specs && <span className="text-ink-mute"> ({l.specs})</span>}</li>)}
                     </ul>
                     {r.myQuote && (
-                      <div className="mt-2 text-xs text-slate-600">
+                      <div className="mt-2 text-xs text-ink-soft">
                         Your quote (v{r.myQuote.version}): {money(r.myQuote.unitPrice)}/unit · total {money(r.myQuote.landedCost)} · {r.myQuote.deliveryDays} days
                       </div>
                     )}
                   </div>
                   {r.open && (
-                    <button className="btn-success" disabled={vendor.status !== "ACTIVE"} onClick={() => openQuote(r)}>{r.myQuote ? "Revise quote" : "Submit quote"}</button>
+                    <button className="btn-primary" disabled={vendor.status !== "ACTIVE"} onClick={() => openQuote(r)}>{r.myQuote ? "Revise quote" : "Submit quote"}</button>
                   )}
                 </div>
               </Card>
             ))}
-            <p className="text-xs text-slate-400">Sealed bid: you only see your own quotes. The school compares landed cost (price + GST + delivery), delivery time and vendor rating.</p>
+            <p className="text-xs text-ink-mute">Sealed bid: you only see your own quotes. The school compares landed cost (price + GST + delivery), delivery time and vendor rating.</p>
           </div>
         )}
 
@@ -137,16 +138,16 @@ export default function VendorPortal() {
           <Card bodyClass="p-0">
             {!orders?.length ? <Empty>No purchase orders yet.</Empty> : (
               <table className="min-w-full">
-                <thead className="bg-slate-50"><tr><th className="th">PO</th><th className="th text-right">Amount</th><th className="th">Deliver by</th><th className="th">Status</th><th className="th" /></tr></thead>
-                <tbody className="divide-y divide-slate-100">
+                <thead className="bg-raised"><tr><th className="th">PO</th><th className="th text-right">Amount</th><th className="th">Deliver by</th><th className="th">Status</th><th className="th" /></tr></thead>
+                <tbody className="divide-y divide-rule">
                   {orders.map((o) => (
                     <tr key={o.id}>
-                      <td className="td"><div className="font-medium">{o.number}</div><div className="text-xs text-slate-500">{o.title}</div></td>
-                      <td className="td text-right tabular-nums">{money(o.amount)}<div className="text-[11px] text-slate-400">{terms(o.paymentTerms)}</div></td>
+                      <td className="td"><div className="font-medium">{o.number}</div><div className="text-xs text-ink-mute">{o.title}</div></td>
+                      <td className="td text-right tabular-nums">{money(o.amount)}<div className="text-[11px] text-ink-mute">{terms(o.paymentTerms)}</div></td>
                       <td className="td">{date(o.expectedDelivery)}</td>
                       <td className="td"><StatusBadge status={o.status} /></td>
                       <td className="td text-right">
-                        {o.status === "ISSUED" && <button className="btn-success px-2.5 py-1 text-xs" onClick={() => orderAction(o, "accept")}>Accept PO</button>}
+                        {o.status === "ISSUED" && <button className="btn-primary px-2.5 py-1 text-xs" onClick={() => orderAction(o, "accept")}>Accept PO</button>}
                         {o.status === "ACCEPTED" && <button className="btn-secondary px-2.5 py-1 text-xs" onClick={() => orderAction(o, "dispatch")}>Mark dispatched</button>}
                       </td>
                     </tr>
@@ -159,12 +160,12 @@ export default function VendorPortal() {
 
         {tab === "Documents" && (
           <Card title="Compliance documents" bodyClass="p-0" actions={<button className="btn-secondary text-xs" onClick={() => setDocOpen(true)}>+ Upload / renew</button>}>
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-rule">
               {vendor.documents.map((d) => (
                 <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 text-sm">
-                  <span><b className="font-medium">{label(d.type)}</b> <span className="text-xs text-slate-500">{d.number}</span></span>
+                  <span><b className="font-medium">{label(d.type)}</b> <span className="text-xs text-ink-mute">{d.number}</span></span>
                   <span className="flex items-center gap-2">
-                    {d.expiryDate && <span className={`text-xs ${d.expired ? "text-rose-600" : "text-slate-500"}`}>{d.expired ? "Expired" : "Valid till"} {date(d.expiryDate)}</span>}
+                    {d.expiryDate && <span className={`text-xs ${d.expired ? "text-danger" : "text-ink-mute"}`}>{d.expired ? "Expired" : "Valid till"} {date(d.expiryDate)}</span>}
                     <StatusBadge status={d.verification} />
                   </span>
                 </li>
@@ -176,11 +177,11 @@ export default function VendorPortal() {
         {tab === "Messages" && (
           <Card bodyClass="p-0">
             {!messages?.length ? <Empty>No messages.</Empty> : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-rule">
                 {messages.map((m, i) => (
                   <li key={i} className="px-5 py-3 text-sm">
-                    <div className="flex items-center gap-2"><ChannelChip channel={m.channel} /><b className="font-medium">{m.subject}</b><span className="ml-auto text-xs text-slate-400">{dateTime(m.at)}</span></div>
-                    <pre className="mt-1 whitespace-pre-wrap font-sans text-xs text-slate-500">{m.body}</pre>
+                    <div className="flex items-center gap-2"><ChannelChip channel={m.channel} /><b className="font-medium">{m.subject}</b><span className="ml-auto text-xs text-ink-mute">{dateTime(m.at)}</span></div>
+                    <pre className="mt-1 whitespace-pre-wrap font-sans text-xs text-ink-mute">{m.body}</pre>
                   </li>
                 ))}
               </ul>
@@ -191,11 +192,11 @@ export default function VendorPortal() {
 
       <Modal open={!!quoting} wide title={`Quote for ${quoting?.title ?? ""}`} onClose={() => setQuoting(null)}
         footer={<><button className="btn-secondary" onClick={() => setQuoting(null)}>Cancel</button>
-          <button className="btn-success" disabled={act.busy || !Number(q.unitPrice)} onClick={submit}>Submit quote · {money(total)}</button></>}>
+          <button className="btn-primary" disabled={act.busy || !Number(q.unitPrice)} onClick={submit}>Submit quote · {money(total)}</button></>}>
         {quoting && (
           <div className="space-y-4">
             <ErrorBox message={act.error} onClose={() => act.setError(null)} />
-            <p className="text-sm text-slate-600">Quantity: <b>{qty} {quoting.lines[0]?.unit}</b>{quoting.lines[0]?.specs && <> · {quoting.lines[0].specs}</>}</p>
+            <p className="text-sm text-ink-soft">Quantity: <b>{qty} {quoting.lines[0]?.unit}</b>{quoting.lines[0]?.specs && <> · {quoting.lines[0].specs}</>}</p>
             <div className="grid gap-3 sm:grid-cols-3">
               <Field label="Unit price (₹) *"><input className="input" type="number" min={0} step="0.01" value={q.unitPrice} onChange={(e) => setQ({ ...q, unitPrice: e.target.value })} /></Field>
               <Field label="GST %">
@@ -215,7 +216,7 @@ export default function VendorPortal() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={q.meetsSpecs} onChange={(e) => setQ({ ...q, meetsSpecs: e.target.checked })} /> Meets all requested specifications</label>
             {!q.meetsSpecs && <Field label="Describe the deviation"><input className="input" value={q.specDeviation} onChange={(e) => setQ({ ...q, specDeviation: e.target.value })} /></Field>}
             <Field label="Remarks (brand, warranty…)"><textarea className="input min-h-16" value={q.remarks} onChange={(e) => setQ({ ...q, remarks: e.target.value })} /></Field>
-            <div className="flex justify-between rounded-lg bg-slate-50 px-4 py-3 text-sm">
+            <div className="flex justify-between rounded-lg bg-raised px-4 py-3 text-sm">
               <span>Subtotal {money(sub)} + GST {money((sub * Number(q.taxPercent || 0)) / 100)} + delivery {money(Number(q.deliveryCharge || 0))}</span>
               <b>{money(total)}</b>
             </div>
@@ -224,7 +225,7 @@ export default function VendorPortal() {
       </Modal>
 
       <Modal open={docOpen} title="Upload / renew document" onClose={() => setDocOpen(false)}
-        footer={<><button className="btn-secondary" onClick={() => setDocOpen(false)}>Cancel</button><button className="btn-success" disabled={act.busy} onClick={uploadDoc}>Upload</button></>}>
+        footer={<><button className="btn-secondary" onClick={() => setDocOpen(false)}>Cancel</button><button className="btn-primary" disabled={act.busy} onClick={uploadDoc}>Upload</button></>}>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Type">
             <select className="input" value={doc.type} onChange={(e) => setDoc({ ...doc, type: e.target.value })}>
@@ -234,12 +235,12 @@ export default function VendorPortal() {
           <Field label="Number"><input className="input" value={doc.number} onChange={(e) => setDoc({ ...doc, number: e.target.value })} /></Field>
           <Field label="Valid till"><input className="input" type="date" value={doc.expiryDate} onChange={(e) => setDoc({ ...doc, expiryDate: e.target.value })} /></Field>
         </div>
-        <p className="mt-3 text-xs text-slate-500">The school verifies the document, then reactivates your account if it was suspended.</p>
+        <p className="mt-3 text-xs text-ink-mute">The school verifies the document, then reactivates your account if it was suspended.</p>
       </Modal>
     </div>
   );
 }
 
 function MiniStat({ k, v }: { k: string; v: React.ReactNode }) {
-  return <div className="card p-4"><div className="text-xs text-slate-500">{k}</div><div className="mt-1 text-xl font-semibold tabular-nums">{v}</div></div>;
+  return <div className="card p-4"><div className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute">{k}</div><div className="mt-2 font-display text-2xl leading-none tracking-wide tabular-nums">{v}</div></div>;
 }

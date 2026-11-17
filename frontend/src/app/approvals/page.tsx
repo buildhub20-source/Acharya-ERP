@@ -31,14 +31,14 @@ function Section({ title, rows, hint }: { title: string; rows: PurchaseRequest[]
   return (
     <Card title={`${title} (${rows.length})`} bodyClass="p-0">
       {rows.length === 0 ? <Empty>{hint}</Empty> : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-rule">
           {rows.map((p) => (
             <li key={p.id}>
-              <Link href={`/procurement/${p.id}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 hover:bg-slate-50">
+              <Link href={`/procurement/${p.id}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 hover:bg-raised">
                 <div>
-                  <div className="font-medium text-slate-900">{p.title}</div>
-                  <div className="text-xs text-slate-500">{p.number} · {p.department} · needed by {date(p.dueDate)}</div>
-                  {p.selectionJustification && <div className="mt-1 text-xs text-slate-600">“{p.selectionJustification}”</div>}
+                  <div className="font-medium text-ink">{p.title}</div>
+                  <div className="text-xs text-ink-mute">{p.number} · {p.department} · needed by {date(p.dueDate)}</div>
+                  {p.selectionJustification && <div className="mt-1 text-xs text-ink-soft">“{p.selectionJustification}”</div>}
                 </div>
                 <StatusBadge status={p.status} />
               </Link>

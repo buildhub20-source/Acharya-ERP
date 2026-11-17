@@ -30,6 +30,8 @@ import com.schoolerp.inventory.web.dto.Dtos.QuoteSubmission;
 import com.schoolerp.inventory.web.dto.Dtos.RawReplyRequest;
 import com.schoolerp.inventory.web.dto.Dtos.SendRfqRequest;
 import com.schoolerp.inventory.web.dto.InventoryDtos.AdjustmentRequest;
+import com.schoolerp.inventory.web.dto.VendorDtos.CatalogueEntry;
+import com.schoolerp.inventory.web.dto.VendorDtos.IdentityChangeRequest;
 import com.schoolerp.inventory.web.dto.InventoryDtos.GrnRequest;
 import com.schoolerp.inventory.web.dto.InventoryDtos.IssueRequest;
 import java.math.BigDecimal;
@@ -79,6 +81,7 @@ public class MockDataSeeder implements CommandLineRunner {
         seedItems();
         seedStock();
         seedVendors();
+        seedCatalogue();
         vendorService.refreshCompliance();
         seedPurchaseRequests();
         log.info("Mock data loaded: {} categories, {} items, {} vendors, {} purchase requests",
@@ -240,6 +243,7 @@ public class MockDataSeeder implements CommandLineRunner {
                 VendorStatus.INVITED, null, null, new VendorPerformance(), true, null);
         invited.getDocuments().clear();
         invited.setBank(null);
+        log.info("Demo onboarding link for {}: {}", invited.getLegalName(), vendorService.sendInvite(invited.getId()).link());
         vendor("QuickFix IT Solutions", "QuickFix IT", VendorType.SERVICE, "Chennai", "600096",
                 "33AAPFQ7878C1Z3", "AAPFQ7878C", List.of("it"),
                 contact("Rahul Menon", "Director", "9840078787", "rahul@quickfixit.in", Channel.EMAIL),
@@ -249,6 +253,44 @@ public class MockDataSeeder implements CommandLineRunner {
                 "33AAFCC9090D1Z1", "AAFCC9090D", List.of("housekeeping"),
                 contact("Mohan L", "Sales", "9445090909", "cleanpro.sales@gmail.com", Channel.WHATSAPP),
                 VendorStatus.ACTIVE, "NET_15", 2, perf(12, 12, 2.0, 7, 98, 97, 4.7), false, 2013);
+    }
+
+    /** Rate cards: which items each vendor supplies, at what typical price and minimum order. */
+    private void seedCatalogue() {
+        String by = "Mr. Ravi (Procurement Admin)";
+        rate("Stride Footwear", "ITM-1", "745", 10, 7, by);
+        rate("Stride Footwear", "ITM-2", "920", 10, 10, by);
+        rate("City Shoe Mart", "ITM-1", "720", 5, 5, by);
+        rate("City Shoe Mart", "ITM-2", "960", 5, 5, by);
+        rate("Kids Komfort", "ITM-1", "690", 20, 10, by);
+        rate("Sprint Sports", "ITM-1", "760", 6, 8, by);
+        rate("Sprint Sports", "ITM-10", "590", 6, 3, by);
+        rate("Uniform House", "ITM-3", "305", 50, 21, by);
+        rate("Uniform House", "ITM-4", "430", 50, 21, by);
+        rate("Smart Tailors", "ITM-3", "330", 20, 14, by);
+        rate("Saraswathi Stationers", "ITM-5", "40", 100, 3, by);
+        rate("Saraswathi Stationers", "ITM-6", "275", 10, 3, by);
+        rate("Saraswathi Stationers", "ITM-11", "52", 20, 3, by);
+        rate("Print Point", "ITM-6", "268", 20, 4, by);
+        rate("EduMart", "ITM-5", "41", 200, 6, by);
+        rate("EduMart", "ITM-9", "5150", 10, 18, by);
+        rate("SciLab", "ITM-7", "88", 50, 15, by);
+        rate("SciLab", "ITM-8", "395", 10, 15, by);
+        rate("Science House", "ITM-8", "425", 5, 5, by);
+        rate("LabCraft", "ITM-7", "92", 24, 7, by);
+        rate("Woodcraft", "ITM-9", "5450", 10, 20, by);
+        rate("Metro Steel", "ITM-9", "4980", 10, 14, by);
+        rate("CleanPro", "ITM-12", "330", 5, 2, by);
+
+        // A legal-name change waiting for re-verification, to show the approval flow.
+        Vendor edumart = vendors.findAll().stream().filter(v -> "EduMart".equals(v.getTradeName())).findFirst().orElseThrow();
+        vendorService.requestIdentityChange(edumart.getId(), new IdentityChangeRequest("EduMart Office Solutions LLP",
+                edumart.getGstin(), edumart.getPan(), "Converted from partnership firm to LLP on 1 Oct 2026", by));
+    }
+
+    private void rate(String vendorName, String itemId, String price, int moq, int leadDays, String by) {
+        Vendor v = vendors.findAll().stream().filter(x -> vendorName.equals(x.getDisplayName())).findFirst().orElseThrow();
+        vendorService.upsertCatalogue(v.getId(), new CatalogueEntry(itemId, new BigDecimal(price), moq, leadDays), by);
     }
 
     private Vendor vendor(String legal, String trade, VendorType type, String city, String pin, String gstin,
