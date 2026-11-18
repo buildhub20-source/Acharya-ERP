@@ -4,6 +4,7 @@ import com.schoolerp.inventory.model.Enums.Channel;
 import com.schoolerp.inventory.model.Enums.QuoteSource;
 import jakarta.mail.Address;
 import jakarta.mail.BodyPart;
+import jakarta.mail.FetchProfile;
 import jakarta.mail.Flags;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
@@ -36,19 +37,27 @@ public class EmailInboxPoller {
     private final String username;
     private final String password;
     private final String folder;
+    private final String from;
 
     public EmailInboxPoller(InboundReplyService inbound,
                             @Value("${app.mail.imap.host:}") String host,
                             @Value("${app.mail.imap.port:993}") int port,
                             @Value("${app.mail.username:}") String username,
                             @Value("${app.mail.password:}") String password,
-                            @Value("${app.mail.imap.folder:INBOX}") String folder) {
+                            @Value("${app.mail.imap.folder:INBOX}") String folder,
+                            @Value("${app.mail.from:}") String from) {
         this.inbound = inbound;
         this.host = host;
         this.port = port;
         this.username = username;
         this.password = password;
         this.folder = folder;
+        this.from = from;
+    }
+
+    /** Mail the school sent itself (e.g. an RFQ to its own address) must never be read as a vendor reply. */
+    private boolean isOwnAddress(String sender) {
+        return sender != null && (sender.equalsIgnoreCase(username) || sender.equalsIgnoreCase(from));
     }
 
     @Scheduled(fixedDelayString = "${app.mail.imap.poll-ms:60000}", initialDelay = 15000)
@@ -65,16 +74,26 @@ public class EmailInboxPoller {
                 Folder inbox = store.getFolder(folder);
                 inbox.open(Folder.READ_WRITE);
                 Message[] unread = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
+                // Fetch only the envelope (From/Subject): this does NOT mark mail as read.
+                FetchProfile envelope = new FetchProfile();
+                envelope.add(FetchProfile.Item.ENVELOPE);
+                inbox.fetch(unread, envelope);
+                int processed = 0;
                 for (Message msg : unread) {
+                    String sender = senderOf(msg);
+                    // Anything not from a registered vendor (the school's own mail, newsletters, personal mail)
+                    // is left completely untouched: not opened, not logged, still unread.
+                    if (sender == null || isOwnAddress(sender) || !inbound.isVendorEmail(sender)) continue;
                     try {
-                        handle(msg);
+                        handle(msg, sender);
                     } catch (Exception e) {
                         log.warn("Could not process email '{}': {}", msg.getSubject(), e.getMessage());
                     }
                     msg.setFlag(Flags.Flag.SEEN, true);
+                    processed++;
                 }
                 inbox.close(false);
-                if (unread.length > 0) log.info("IMAP: processed {} new email(s)", unread.length);
+                if (processed > 0) log.info("IMAP: processed {} vendor email(s)", processed);
             } finally {
                 store.close();
             }
@@ -83,9 +102,18 @@ public class EmailInboxPoller {
         }
     }
 
-    private void handle(Message msg) throws Exception {
+    private static String senderOf(Message msg) throws Exception {
         Address[] from = msg.getFrom();
-        String sender = from != null && from.length > 0 && from[0] instanceof InternetAddress ia ? ia.getAddress() : null;
+        return from != null && from.length > 0 && from[0] instanceof InternetAddress ia ? ia.getAddress() : null;
+    }
+
+    private void handle(Message msg, String sender) throws Exception {
+        // Out-of-office and other auto-replies (RFC 3834) are not quotes, and answering them can loop.
+        String[] auto = msg.getHeader("Auto-Submitted");
+        if (auto != null && auto.length > 0 && !"no".equalsIgnoreCase(auto[0].trim())) {
+            log.info("IMAP: skipping auto-reply from {}: '{}'", sender, msg.getSubject());
+            return;
+        }
         Parsed p = new Parsed();
         walk(msg, p);
         String text = stripQuoted(p.plain != null ? p.plain : p.html != null ? htmlToText(p.html) : "");

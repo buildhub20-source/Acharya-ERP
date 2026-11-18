@@ -41,12 +41,21 @@ public class Vendor {
     private boolean portalEnabled;
     private LocalDateTime lastPortalLogin;
 
+    /** Channels the vendor told us to stop using (replied STOP). Nothing is sent on them again until START. */
+    private List<Enums.Channel> optedOutChannels = new ArrayList<>();
+    /** Set when the vendor replied DELETE MY DATA; the purchase office has to act on it. */
+    private LocalDateTime dataDeletionRequestedAt;
+
     private VendorPerformance performance = new VendorPerformance();
     private List<AuditEntry> audit = new ArrayList<>();
     private LocalDateTime createdAt;
 
     public boolean isRfqEligible() {
         return status == Enums.VendorStatus.ACTIVE;
+    }
+
+    public boolean hasOptedOut(Enums.Channel channel) {
+        return optedOutChannels.contains(channel);
     }
 
     public String getDisplayName() {

@@ -14,7 +14,9 @@ import com.schoolerp.inventory.service.ProcurementService;
 import com.schoolerp.inventory.service.QuoteParserService;
 import com.schoolerp.inventory.web.dto.Dtos.RawReplyRequest;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -36,6 +38,8 @@ public class InboundReplyService {
     private final ProcurementService procurement;
     private final MessagingService messaging;
     private final QuoteParserService parser;
+    /** RFQs whose vendor has already been asked to resend a reply without a price. */
+    private final java.util.Set<String> askedToResend = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public InboundReplyService(VendorRepository vendors, ProcurementService procurement,
                                MessagingService messaging, QuoteParserService parser) {
@@ -65,6 +69,25 @@ public class InboundReplyService {
         in.setVendorId(v.getId());
         in.setVendorName(v.getDisplayName());
 
+        // Opt-out keywords come before anything else: "STOP" must never be answered with "please resend your quote".
+        OptOut keyword = optOutKeyword(body);
+        if (keyword != OptOut.NONE) {
+            in.setStatus(DeliveryState.RECEIVED);
+            if (keyword == OptOut.START) {
+                procurement.recordOptIn(v, channel);
+                messaging.sendOptInConfirmation(v, channel);
+                in.setError("Vendor opted back in on " + channel + " (replied START)");
+            } else {
+                boolean delete = keyword == OptOut.DELETE_DATA;
+                if (!v.hasOptedOut(channel)) messaging.sendOptOutConfirmation(v, channel, delete);  // before recording
+                int closed = procurement.recordOptOut(v, channel, delete);
+                in.setError("Vendor opted out of " + channel + (delete ? " and asked for data deletion" : "")
+                        + "; " + closed + " open RFQ(s) closed" + (delete ? " - purchase office must delete their data" : ""));
+            }
+            log.info("Inbound {} from {}: {} -> {}", channel, v.getDisplayName(), keyword, in.getError());
+            return in;
+        }
+
         List<Rfq> open = procurement.openRfqsFor(v.getId(), channel);
         if (open.isEmpty()) {
             in.setError("No open RFQ was sent to this vendor on " + channel + "; reply not used as a quote");
@@ -80,9 +103,12 @@ public class InboundReplyService {
             in.setStatus(DeliveryState.RECEIVED);
             if (attachmentName != null) {
                 in.setError("Attachment received; open it and use \"Log reply\" to enter the quote");
-            } else {
+            } else if (askedToResend.add(rfq.getId())) {
                 in.setError("No price found in the reply; vendor asked to resend");
                 messaging.sendReplyNotUnderstood(rfq, v, channel);
+            } else {
+                // Already asked once for this RFQ: don't reply again (stops loops with auto-responders).
+                in.setError("No price found in the reply; vendor was already asked to resend");
             }
             return in;
         }
@@ -96,6 +122,32 @@ public class InboundReplyService {
             log.warn("Inbound {} reply from {} not recorded: {}", channel, from, e.getMessage());
         }
         return in;
+    }
+
+    enum OptOut { NONE, STOP, DELETE_DATA, START }
+
+    private static final Set<String> STOP_WORDS =
+            Set.of("STOP", "STOP ALL", "STOPALL", "UNSUBSCRIBE", "OPT OUT", "OPTOUT", "END", "QUIT");
+    private static final Set<String> DELETE_WORDS =
+            Set.of("DELETE MY DATA", "DELETE MY DETAILS", "REMOVE MY DATA", "REMOVE MY DETAILS", "DELETE");
+    private static final Set<String> START_WORDS = Set.of("START", "UNSTOP", "SUBSCRIBE", "RESUME");
+
+    /**
+     * Only an exact keyword on the FIRST line counts, so "we cannot stop production, rate 450" stays a quote, while
+     * an email "STOP" followed by a signature still opts out. Punctuation and case are ignored ("Stop.", "stop!").
+     */
+    static OptOut optOutKeyword(String text) {
+        String first = text.lines().map(String::trim).filter(l -> !l.isEmpty()).findFirst().orElse("");
+        String t = first.toUpperCase(Locale.ROOT).replaceAll("[^A-Z ]", " ").replaceAll("\\s+", " ").trim();
+        if (DELETE_WORDS.contains(t)) return OptOut.DELETE_DATA;
+        if (STOP_WORDS.contains(t)) return OptOut.STOP;
+        if (START_WORDS.contains(t)) return OptOut.START;
+        return OptOut.NONE;
+    }
+
+    /** True when this email address belongs to a registered vendor contact. */
+    public boolean isVendorEmail(String address) {
+        return findVendor(Channel.EMAIL, address).isPresent();
     }
 
     private Optional<Vendor> findVendor(Channel channel, String from) {

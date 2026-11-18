@@ -320,6 +320,38 @@ public class ProcurementService {
         rfqs.save(rfq);
     }
 
+    /**
+     * Vendor replied STOP (or DELETE MY DATA) on a channel: never message them there again, and close their open
+     * RFQs on that channel so reminders stop. Returns how many RFQs were closed.
+     */
+    public int recordOptOut(Vendor v, Channel channel, boolean deleteData) {
+        int closed = 0;
+        for (Rfq rfq : openRfqsFor(v.getId(), channel)) {
+            if (rfq.getStatus() == RfqStatus.REPLIED) continue;   // a quote already in stays valid
+            rfq.setStatus(RfqStatus.NO_RESPONSE);
+            rfq.setDeliveryError("Vendor opted out on " + channel + " (replied STOP)");
+            rfqs.save(rfq);
+            closed++;
+        }
+        if (!v.hasOptedOut(channel)) v.getOptedOutChannels().add(channel);
+        if (deleteData && v.getDataDeletionRequestedAt() == null) v.setDataDeletionRequestedAt(LocalDateTime.now());
+        v.getAudit().add(0, com.schoolerp.inventory.model.AuditEntry.of("Vendor (" + channel + ")",
+                deleteData ? "DATA_DELETION_REQUESTED" : "OPTED_OUT",
+                "Replied " + (deleteData ? "DELETE MY DATA" : "STOP") + " on " + channel + "; " + closed
+                        + " open RFQ(s) on this channel closed"));
+        vendors.save(v);
+        return closed;
+    }
+
+    /** Vendor replied START on a channel they had opted out of. */
+    public void recordOptIn(Vendor v, Channel channel) {
+        if (v.getOptedOutChannels().remove(channel)) {
+            v.getAudit().add(0, com.schoolerp.inventory.model.AuditEntry.of("Vendor (" + channel + ")", "OPTED_IN",
+                    "Replied START on " + channel + "; messages on this channel resumed"));
+            vendors.save(v);
+        }
+    }
+
     // ------------------------------------------------------------------ step 5: tracking & reminders
 
     public Rfq remind(String rfqId) {

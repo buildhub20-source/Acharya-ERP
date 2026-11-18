@@ -121,6 +121,19 @@ export default function VendorDetailPage() {
           ) : <span className="text-xs">Principal / Admin must approve</span>}
         </div>
       )}
+      {v.dataDeletionRequestedAt && (
+        <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+          <b>Data deletion requested</b> on {dateTime(v.dataDeletionRequestedAt)}: the vendor replied DELETE MY DATA.
+          Remove their contact details and messages, keeping only records needed for the accounts.
+        </div>
+      )}
+      {v.optedOutChannels?.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <b>Opted out:</b>
+          {v.optedOutChannels.map((ch) => <ChannelChip key={ch} channel={ch} />)}
+          <span>The vendor replied STOP. Nothing is sent on these channels until they reply START; RFQs use their other channels.</span>
+        </div>
+      )}
 
       <div className="mb-5 flex gap-1 overflow-x-auto border-b border-slate-200">
         {TABS.map((t) => (

@@ -45,6 +45,8 @@ export interface Vendor {
   bank: BankDetails | null; pendingBankChange: BankDetails | null;
   paymentTerms: string | null; leadTimeDays: number | null; minOrderValue: number | null;
   portalEnabled: boolean; lastPortalLogin: string | null;
+  /** Channels the vendor replied STOP on; nothing is sent there until they reply START. */
+  optedOutChannels: Channel[]; dataDeletionRequestedAt: string | null;
   performance: VendorPerformance; audit: AuditEntry[]; createdAt: string; rfqEligible: boolean;
 }
 

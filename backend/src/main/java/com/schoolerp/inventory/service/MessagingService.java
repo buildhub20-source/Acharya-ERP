@@ -81,6 +81,7 @@ public class MessagingService {
     }
 
     public boolean reachable(Vendor v, Channel ch) {
+        if (v.hasOptedOut(ch)) return false;   // replied STOP on this channel
         String a = address(v, ch);
         return a != null && !a.isBlank();
     }
@@ -169,6 +170,25 @@ public class MessagingService {
         deliver(ch, vendor, rfq.getId(), "Re: RFQ " + rfq.getReference(), body, null);
     }
 
+    /**
+     * The one last message after STOP / DELETE MY DATA. Must be called BEFORE the opt-out is recorded,
+     * otherwise deliver() blocks it.
+     */
+    public void sendOptOutConfirmation(Vendor vendor, Channel ch, boolean deleteData) {
+        String body = deleteData
+                ? "We have received your request. You will not get further messages from " + schoolName + " here, and"
+                  + " our purchase office will delete your contact details and messages, except records we must keep"
+                  + " for our accounts. Reply START to receive requests for quotation again."
+                : "You will not receive further messages from " + schoolName + " on this number/address."
+                  + " Reply START at any time to receive requests for quotation again.";
+        deliver(ch, vendor, null, deleteData ? "Data deletion request received" : "Unsubscribed", body, null);
+    }
+
+    public void sendOptInConfirmation(Vendor vendor, Channel ch) {
+        deliver(ch, vendor, null, "Subscribed again", "Thank you. You will receive requests for quotation from "
+                + schoolName + " here again.", null);
+    }
+
     /** Award: the full requirement and agreed commercials go to the winning vendor on their channel. */
     public MessageLog sendPurchaseOrder(PurchaseOrder po, Vendor vendor, PurchaseRequest pr, Quote q, Channel ch) {
         StringBuilder sb = new StringBuilder();
@@ -231,6 +251,10 @@ public class MessagingService {
         if (ch == Channel.PORTAL) {
             m.setProvider("portal");
             m.setStatus(DeliveryState.SENT);
+        } else if (vendor.hasOptedOut(ch)) {
+            m.setProvider(sender == null ? "-" : sender.provider());
+            m.setStatus(DeliveryState.BLOCKED);
+            m.setError("Not sent: vendor opted out of " + ch.name().toLowerCase() + " (replied STOP)");
         } else if (m.getTo() == null || m.getTo().isBlank()) {
             m.setProvider(sender == null ? "-" : sender.provider());
             m.setStatus(DeliveryState.FAILED);
