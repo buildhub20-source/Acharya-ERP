@@ -153,12 +153,4 @@ public final class Dtos {
             ApprovalPolicy approvalPolicy,
             PurchaseOrder purchaseOrder) {}
 
-    public record OutboxMessage(
-            LocalDateTime at,
-            Enums.Channel channel,
-            String vendorId,
-            String vendorName,
-            String to,
-            String subject,
-            String body) {}
 }

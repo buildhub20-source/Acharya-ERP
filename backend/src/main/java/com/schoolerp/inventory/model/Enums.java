@@ -14,10 +14,18 @@ public final class Enums {
 
     public enum PrStatus { DRAFT, RFQ_SENT, COLLECTING_QUOTES, UNDER_REVIEW, PENDING_APPROVAL, SENT_BACK, REJECTED_REQUOTE, APPROVED, PO_ISSUED, CANCELLED }
 
-    public enum RfqStatus { SENT, DELIVERED, READ, REPLIED, NO_RESPONSE }
+    public enum RfqStatus { SENT, DELIVERED, READ, REPLIED, NO_RESPONSE, FAILED }
+
+    public enum MessageDirection { OUTBOUND, INBOUND }
+
+    /**
+     * State of one logged message. MOCK = channel has no provider configured; BLOCKED = recipient is not on
+     * the test allowlist; UNMATCHED = inbound message we could not tie to an open RFQ.
+     */
+    public enum DeliveryState { SENT, DELIVERED, READ, FAILED, MOCK, BLOCKED, RECEIVED, UNMATCHED }
 
     /** Format the quote arrived in; drives the "parse responses" step. */
-    public enum QuoteSource { PORTAL, EMAIL_TEXT, WHATSAPP_TEXT, PDF, IMAGE, VOICE, MANUAL }
+    public enum QuoteSource { PORTAL, EMAIL_TEXT, WHATSAPP_TEXT, SMS_TEXT, PDF, IMAGE, VOICE, MANUAL }
 
     public enum ApprovalLevel { MANAGER, OFFICIAL }
 

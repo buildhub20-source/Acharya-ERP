@@ -6,7 +6,7 @@ import com.schoolerp.inventory.service.MessagingService;
 import com.schoolerp.inventory.service.VendorService;
 import com.schoolerp.inventory.web.dto.Dtos.ActorRequest;
 import com.schoolerp.inventory.web.dto.Dtos.DocumentRequest;
-import com.schoolerp.inventory.web.dto.Dtos.OutboxMessage;
+import com.schoolerp.inventory.model.MessageLog;
 import com.schoolerp.inventory.web.dto.Dtos.RatingRequest;
 import com.schoolerp.inventory.web.dto.Dtos.VendorRequest;
 import com.schoolerp.inventory.web.dto.Dtos.VendorStatusChange;
@@ -103,7 +103,7 @@ public class VendorController {
 
     /** Mock outbox: every email / WhatsApp / SMS the system "sent". */
     @GetMapping("/outbox")
-    public List<OutboxMessage> outbox(@RequestParam(required = false) String vendorId,
+    public List<MessageLog> outbox(@RequestParam(required = false) String vendorId,
                                       @RequestParam(defaultValue = "50") int limit) {
         return messaging.outbox(vendorId, limit);
     }

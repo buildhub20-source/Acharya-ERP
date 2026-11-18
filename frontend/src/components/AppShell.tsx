@@ -20,7 +20,7 @@ const NAV = [
       { href: "/procurement", label: "Purchase Requests", icon: "☰" },
       { href: "/approvals", label: "Approvals", icon: "✓" },
       { href: "/purchase-orders", label: "Purchase Orders", icon: "▤" },
-      { href: "/outbox", label: "Message Outbox", icon: "✉" },
+      { href: "/outbox", label: "Messages", icon: "✉" },
     ],
   },
   {

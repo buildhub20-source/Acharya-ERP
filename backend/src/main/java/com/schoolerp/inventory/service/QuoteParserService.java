@@ -90,7 +90,7 @@ public class QuoteParserService {
         // Confidence: start from how reliable the source is, minus missing fields.
         double base = switch (source) {
             case PORTAL, MANUAL -> 1.0;
-            case EMAIL_TEXT, WHATSAPP_TEXT -> 0.95;
+            case EMAIL_TEXT, WHATSAPP_TEXT, SMS_TEXT -> 0.95;
             case PDF -> 0.9;
             case IMAGE -> 0.75;
             case VOICE -> 0.7;

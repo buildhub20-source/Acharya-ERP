@@ -7,6 +7,8 @@ import com.schoolerp.inventory.model.AuditEntry;
 import com.schoolerp.inventory.model.Enums.ApprovalDecision;
 import com.schoolerp.inventory.model.Enums.ApprovalLevel;
 import com.schoolerp.inventory.model.Enums.Channel;
+import com.schoolerp.inventory.model.Enums.DeliveryState;
+import com.schoolerp.inventory.model.MessageLog;
 import com.schoolerp.inventory.model.Enums.PoStatus;
 import com.schoolerp.inventory.model.Enums.PrStatus;
 import com.schoolerp.inventory.model.Enums.QuoteSource;
@@ -236,12 +238,17 @@ public class ProcurementService {
             rfq.setRound(pr.getRound());
             rfq.setVendorId(v.getId());
             rfq.setVendorName(v.getDisplayName());
-            rfq.setChannels(channelsFor(v));
+            Channel channel = messaging.channelFor(v);
+            if (channel == null) {
+                throw ApiException.badRequest(v.getDisplayName() + " has no email, WhatsApp, phone or portal access to send the RFQ to");
+            }
+            // One channel only: the vendor's own choice. Their reply is expected back on the same channel.
+            rfq.setChannels(new ArrayList<>(List.of(channel)));
             rfq.setStatus(RfqStatus.SENT);
             rfq.setSentAt(LocalDateTime.now());
             rfq.setMessage(messaging.buildRfqMessage(pr, rfq, v));
             rfqs.save(rfq);
-            messaging.sendRfq(rfq, v);
+            applySendResult(rfq, messaging.sendRfq(pr, rfq, v));
             v.getPerformance().setRfqsReceived(v.getPerformance().getRfqsReceived() + 1);
             sent++;
         }
@@ -255,15 +262,62 @@ public class ProcurementService {
         return detail(prId);
     }
 
-    private List<Channel> channelsFor(Vendor v) {
-        List<Channel> channels = new ArrayList<>();
-        v.getContacts().stream().findFirst().ifPresent(c -> {
-            if (c.getEmail() != null && !c.getEmail().isBlank()) channels.add(Channel.EMAIL);
-            if (c.getWhatsapp() != null && !c.getWhatsapp().isBlank()) channels.add(Channel.WHATSAPP);
-            else if (c.getPhone() != null && !c.getPhone().isBlank()) channels.add(Channel.SMS);
+    private void applySendResult(Rfq rfq, MessageLog m) {
+        if (m.getStatus() == DeliveryState.FAILED) {
+            rfq.setStatus(RfqStatus.FAILED);
+            rfq.setDeliveryError(m.getError());
+        } else {
+            if (rfq.getStatus() == RfqStatus.FAILED) rfq.setStatus(RfqStatus.SENT);
+            rfq.setDeliveryError(m.getStatus() == DeliveryState.BLOCKED ? m.getError() : null);
+            if (m.getProviderMessageId() != null) rfq.setProviderMessageId(m.getProviderMessageId());
+        }
+        rfqs.save(rfq);
+    }
+
+    /** Delivered / read receipt from WhatsApp or the SMS gateway, mapped onto the RFQ it belongs to. */
+    public void applyDeliveryReceipt(String rfqId, DeliveryState state, String error) {
+        rfqs.findById(rfqId).ifPresent(rfq -> {
+            LocalDateTime now = LocalDateTime.now();
+            switch (state) {
+                case DELIVERED -> {
+                    if (rfq.getDeliveredAt() == null) rfq.setDeliveredAt(now);
+                    if (rfq.getStatus() == RfqStatus.SENT) rfq.setStatus(RfqStatus.DELIVERED);
+                }
+                case READ -> {
+                    if (rfq.getDeliveredAt() == null) rfq.setDeliveredAt(now);
+                    if (rfq.getReadAt() == null) rfq.setReadAt(now);
+                    if (rfq.getStatus() == RfqStatus.SENT || rfq.getStatus() == RfqStatus.DELIVERED) rfq.setStatus(RfqStatus.READ);
+                }
+                case FAILED -> {
+                    if (rfq.getStatus() == RfqStatus.SENT) rfq.setStatus(RfqStatus.FAILED);
+                    rfq.setDeliveryError(error);
+                }
+                default -> { }
+            }
+            rfqs.save(rfq);
         });
-        if (v.isPortalEnabled()) channels.add(Channel.PORTAL);
-        return channels;
+    }
+
+    /** Current-round RFQs for this vendor that can still take a reply on this channel. */
+    public List<Rfq> openRfqsFor(String vendorId, Channel channel) {
+        return rfqs.findByVendor(vendorId).stream()
+                .filter(r -> r.getChannels().contains(channel))
+                .filter(r -> r.getStatus() != RfqStatus.NO_RESPONSE)
+                .filter(r -> {
+                    PurchaseRequest pr = get(r.getPurchaseRequestId());
+                    return r.getRound() == pr.getRound() && isCollecting(pr);
+                })
+                .sorted(Comparator.comparing(Rfq::getSentAt).reversed())
+                .toList();
+    }
+
+    /** A vendor reply that arrived but had no readable price: counts as read, no quote is created. */
+    public void markRepliedWithoutQuote(Rfq rfq) {
+        LocalDateTime now = LocalDateTime.now();
+        if (rfq.getDeliveredAt() == null) rfq.setDeliveredAt(now);
+        if (rfq.getReadAt() == null) rfq.setReadAt(now);
+        if (rfq.getStatus() == RfqStatus.SENT || rfq.getStatus() == RfqStatus.DELIVERED) rfq.setStatus(RfqStatus.READ);
+        rfqs.save(rfq);
     }
 
     // ------------------------------------------------------------------ step 5: tracking & reminders
@@ -275,7 +329,7 @@ public class ProcurementService {
         Vendor v = vendors.findById(rfq.getVendorId()).orElseThrow();
         rfq.setReminderCount(rfq.getReminderCount() + 1);
         rfq.setLastReminderAt(LocalDateTime.now());
-        messaging.sendReminder(rfq, v);
+        applySendResult(rfq, messaging.sendReminder(rfq, v));
         if (rfq.getReminderCount() >= maxReminders) {
             PurchaseRequest pr = get(rfq.getPurchaseRequestId());
             if (pr.getQuoteDeadline() != null && pr.getQuoteDeadline().isBefore(LocalDateTime.now())) {
@@ -292,7 +346,8 @@ public class ProcurementService {
     public int runReminderSweep(Duration interval) {
         int count = 0;
         for (Rfq rfq : rfqs.findAll()) {
-            if (rfq.getStatus() == RfqStatus.REPLIED || rfq.getStatus() == RfqStatus.NO_RESPONSE) continue;
+            if (rfq.getStatus() == RfqStatus.REPLIED || rfq.getStatus() == RfqStatus.NO_RESPONSE
+                    || rfq.getStatus() == RfqStatus.FAILED) continue;
             PurchaseRequest pr = get(rfq.getPurchaseRequestId());
             if (rfq.getRound() != pr.getRound() || !isCollecting(pr)) continue;
             LocalDateTime last = rfq.getLastReminderAt() != null ? rfq.getLastReminderAt() : rfq.getSentAt();
@@ -607,11 +662,17 @@ public class ProcurementService {
         requests.save(pr);
 
         winner.getPerformance().setQuotesWon(winner.getPerformance().getQuotesWon() + 1);
-        messaging.sendPurchaseOrder(po, winner);
+        // Award and regret go back on the same channel each vendor was sent the RFQ on.
+        messaging.sendPurchaseOrder(po, winner, pr, q, rfqChannel(q.getRfqId(), winner));
         latestQuotesForRound(pr).stream()
-                .map(Quote::getVendorId).distinct()
-                .filter(id -> !id.equals(winner.getId()))
-                .forEach(id -> vendors.findById(id).ifPresent(v -> messaging.sendNotSelected(pr, v)));
+                .filter(other -> !other.getVendorId().equals(winner.getId()))
+                .forEach(other -> vendors.findById(other.getVendorId()).ifPresent(
+                        v -> messaging.sendNotSelected(pr, v, rfqChannel(other.getRfqId(), v))));
+    }
+
+    private Channel rfqChannel(String rfqId, Vendor v) {
+        return rfqs.findById(rfqId).filter(r -> !r.getChannels().isEmpty()).map(r -> r.getChannels().get(0))
+                .orElseGet(() -> { Channel c = messaging.channelFor(v); return c == null ? Channel.EMAIL : c; });
     }
 
     public PurchaseOrder updatePoStatus(String poId, PoStatus status, String vendorId) {

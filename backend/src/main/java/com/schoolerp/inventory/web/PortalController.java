@@ -8,7 +8,7 @@ import com.schoolerp.inventory.service.MessagingService;
 import com.schoolerp.inventory.service.ProcurementService;
 import com.schoolerp.inventory.service.VendorService;
 import com.schoolerp.inventory.web.dto.Dtos.DocumentRequest;
-import com.schoolerp.inventory.web.dto.Dtos.OutboxMessage;
+import com.schoolerp.inventory.model.MessageLog;
 import com.schoolerp.inventory.web.dto.Dtos.QuoteSubmission;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -84,7 +84,7 @@ public class PortalController {
     }
 
     @GetMapping("/messages")
-    public List<OutboxMessage> messages(@PathVariable String vendorId) {
+    public List<MessageLog> messages(@PathVariable String vendorId) {
         return messaging.outbox(vendorId, 30);
     }
 }

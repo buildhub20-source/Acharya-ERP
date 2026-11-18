@@ -8,8 +8,8 @@ export type Channel = "EMAIL" | "WHATSAPP" | "SMS" | "PORTAL";
 export type PrStatus =
   | "DRAFT" | "RFQ_SENT" | "COLLECTING_QUOTES" | "UNDER_REVIEW" | "PENDING_APPROVAL"
   | "SENT_BACK" | "REJECTED_REQUOTE" | "APPROVED" | "PO_ISSUED" | "CANCELLED";
-export type RfqStatus = "SENT" | "DELIVERED" | "READ" | "REPLIED" | "NO_RESPONSE";
-export type QuoteSource = "PORTAL" | "EMAIL_TEXT" | "WHATSAPP_TEXT" | "PDF" | "IMAGE" | "VOICE" | "MANUAL";
+export type RfqStatus = "SENT" | "DELIVERED" | "READ" | "REPLIED" | "NO_RESPONSE" | "FAILED";
+export type QuoteSource = "PORTAL" | "EMAIL_TEXT" | "WHATSAPP_TEXT" | "SMS_TEXT" | "PDF" | "IMAGE" | "VOICE" | "MANUAL";
 
 export interface Category { id: string; name: string; description: string }
 export type StockStatus = "OK" | "LOW" | "OUT";
@@ -63,7 +63,7 @@ export interface PurchaseRequest {
 }
 export interface Rfq {
   id: string; reference: string; purchaseRequestId: string; round: number; vendorId: string; vendorName: string;
-  channels: Channel[]; status: RfqStatus; sentAt: string; deliveredAt: string | null; readAt: string | null;
+  channels: Channel[]; status: RfqStatus; deliveryError: string | null; sentAt: string; deliveredAt: string | null; readAt: string | null;
   repliedAt: string | null; reminderCount: number; lastReminderAt: string | null; message: string;
 }
 export interface Quote {
@@ -115,7 +115,14 @@ export interface PurchaseRequestDetail {
   request: PurchaseRequest; categoryName: string; rfqs: Rfq[]; quotes: Quote[];
   comparison: Comparison; approvalPolicy: ApprovalPolicy; purchaseOrder: PurchaseOrder | null;
 }
-export interface OutboxMessage { at: string; channel: Channel; vendorId: string; vendorName: string; to: string; subject: string; body: string }
+export type DeliveryState = "SENT" | "DELIVERED" | "READ" | "FAILED" | "MOCK" | "BLOCKED" | "RECEIVED" | "UNMATCHED";
+export interface OutboxMessage {
+  id: string; at: string; direction: "OUTBOUND" | "INBOUND"; channel: Channel; provider: string;
+  vendorId: string | null; vendorName: string | null; to: string | null; subject: string | null; body: string;
+  rfqId: string | null; providerMessageId: string | null; status: DeliveryState; error: string | null; attachmentName: string | null;
+}
+export interface ChannelStatus { channel: Channel; live: boolean; provider: string; inbound: string }
+export interface AllowlistStatus { channel: "ALLOWLIST"; allowAll: boolean; allowed: string[] }
 export interface ExpiringDoc { vendorId: string; vendorName: string; type: string; expiryDate: string; daysToExpiry: number }
 
 export interface Dashboard {

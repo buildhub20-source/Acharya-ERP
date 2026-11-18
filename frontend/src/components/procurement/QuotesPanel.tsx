@@ -8,7 +8,7 @@ import { useAction } from "@/lib/hooks";
 import type { PurchaseRequestDetail, Quote } from "@/lib/types";
 
 const SRC: Record<string, string> = {
-  PORTAL: "Vendor portal", EMAIL_TEXT: "Email", WHATSAPP_TEXT: "WhatsApp", PDF: "PDF", IMAGE: "Image · OCR", VOICE: "Voice · STT", MANUAL: "Manual entry",
+  PORTAL: "Vendor portal", EMAIL_TEXT: "Email", WHATSAPP_TEXT: "WhatsApp", SMS_TEXT: "SMS", PDF: "PDF", IMAGE: "Image · OCR", VOICE: "Voice · STT", MANUAL: "Manual entry",
 };
 
 /** Step 6: parsed responses, with confidence and a verify/correct flow. */

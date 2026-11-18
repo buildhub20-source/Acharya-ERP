@@ -45,7 +45,7 @@ export default function RfqTracking({ detail, onChange }: { detail: PurchaseRequ
       <div className="overflow-x-auto">
         <table className="min-w-full">
           <thead className="bg-slate-50">
-            <tr><th className="th">Vendor</th><th className="th">Channels</th><th className="th">Progress</th><th className="th">Reminders</th><th className="th" /></tr>
+            <tr><th className="th">Vendor</th><th className="th" title="The vendor's preferred channel. Their reply is only accepted on the same channel.">Channel</th><th className="th">Progress</th><th className="th">Reminders</th><th className="th" /></tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rfqs.map((r) => {
@@ -58,7 +58,7 @@ export default function RfqTracking({ detail, onChange }: { detail: PurchaseRequ
                   </td>
                   <td className="td"><div className="flex flex-wrap gap-1">{r.channels.map((c) => <ChannelChip key={c} channel={c} />)}</div></td>
                   <td className="td">
-                    {r.status === "NO_RESPONSE" ? <StatusBadge status="NO_RESPONSE" /> : (
+                    {r.status === "NO_RESPONSE" || r.status === "FAILED" ? <StatusBadge status={r.status} /> : (
                       <div className="flex items-center gap-1">
                         {PIPE.map((p, i) => (
                           <div key={p} className="flex items-center gap-1">
@@ -73,6 +73,7 @@ export default function RfqTracking({ detail, onChange }: { detail: PurchaseRequ
                     <div className="mt-1 text-[11px] text-slate-400">
                       {r.repliedAt ? `Replied ${timeAgo(r.repliedAt)}` : r.readAt ? `Read ${timeAgo(r.readAt)}` : `Sent ${timeAgo(r.sentAt)}`}
                     </div>
+                    {r.deliveryError && <div className="mt-1 max-w-xs text-[11px] text-rose-600">{r.deliveryError}</div>}
                   </td>
                   <td className="td">
                     {r.reminderCount > 0 ? <Badge tone="amber">{r.reminderCount} sent</Badge> : <span className="text-xs text-slate-400">—</span>}
@@ -80,7 +81,7 @@ export default function RfqTracking({ detail, onChange }: { detail: PurchaseRequ
                   <td className="td text-right">
                     {collecting && r.status !== "REPLIED" && r.status !== "NO_RESPONSE" && (
                       <div className="flex justify-end gap-2">
-                        <button className="btn-ghost px-2 py-1 text-xs" disabled={busy} onClick={() => remind(r)}>Remind</button>
+                        <button className="btn-ghost px-2 py-1 text-xs" disabled={busy} onClick={() => remind(r)}>{r.status === "FAILED" ? "Retry send" : "Remind"}</button>
                         <button className="btn-secondary px-2 py-1 text-xs" onClick={() => setReply({ rfq: r, source: "WHATSAPP_TEXT", text: SAMPLE.WHATSAPP_TEXT })}>Log reply</button>
                       </div>
                     )}

@@ -25,4 +25,7 @@ public class Rfq {
     private int reminderCount;
     private LocalDateTime lastReminderAt;
     private String message;
+    /** Id the provider gave the outbound RFQ; delivered/read webhooks are mapped back with it. */
+    private String providerMessageId;
+    private String deliveryError;
 }

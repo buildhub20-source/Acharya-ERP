@@ -23,6 +23,7 @@ const STATUS_TONE: Record<string, keyof typeof TONES> = {
   REJECTED_REQUOTE: "amber", APPROVED: "green", PO_ISSUED: "green", CANCELLED: "red",
   // rfq
   SENT: "gray", DELIVERED: "blue", READ: "indigo", REPLIED: "green", NO_RESPONSE: "red",
+  FAILED: "red", MOCK: "gray", BLOCKED: "amber", UNMATCHED: "amber",
   // docs / po
   VERIFIED: "green", PENDING: "amber", ISSUED: "indigo", ACCEPTED: "blue", DISPATCHED: "purple",
   PARTIALLY_RECEIVED: "amber", RECEIVED: "green",
