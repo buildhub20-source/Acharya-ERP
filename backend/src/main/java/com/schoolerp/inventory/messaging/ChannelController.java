@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,8 +43,17 @@ public class ChannelController {
     @PostMapping("/test")
     public MessageLog test(@Valid @RequestBody TestSend req) {
         if (req.channel() == Channel.PORTAL) throw ApiException.badRequest("Portal has no external delivery to test");
-        return messaging.sendTest(req.channel(), req.to(), req.message());
+        String to = req.to().trim();
+        if (req.channel() == Channel.EMAIL && !EMAIL.matcher(to).matches())
+            throw ApiException.badRequest("Email needs an email address, e.g. you@example.com");
+        if (req.channel() != Channel.EMAIL && !PHONE.matcher(to).matches())
+            throw ApiException.badRequest(req.channel() + " needs a mobile number, e.g. 98400 12345");
+        return messaging.sendTest(req.channel(), to, req.message());
     }
+
+    private static final Pattern EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    /** 10+ digits, allowing a leading +, spaces and dashes. */
+    private static final Pattern PHONE = Pattern.compile("^\\+?[0-9][0-9 \\-]{8,}[0-9]$");
 
     @PostMapping("/simulate-inbound")
     public MessageLog simulate(@Valid @RequestBody SimulatedReply req) {

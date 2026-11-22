@@ -11,6 +11,15 @@ import type { AllowlistStatus, Channel, ChannelStatus, OutboxMessage } from "@/l
 type ExtChannel = Exclude<Channel, "PORTAL">;
 const CHANNELS: ExtChannel[] = ["EMAIL", "WHATSAPP", "SMS"];
 const PLACEHOLDER: Record<ExtChannel, string> = { EMAIL: "you@example.com", WHATSAPP: "98400 12345", SMS: "98400 12345" };
+const RECIPIENT_LABEL: Record<ExtChannel, string> = { EMAIL: "Email address", WHATSAPP: "WhatsApp number", SMS: "Mobile number" };
+
+/** Returns an error message if `to` is the wrong kind of address for the channel. Mirrors ChannelController. */
+function recipientError(ch: ExtChannel, to: string): string | null {
+  const v = to.trim();
+  if (!v) return null;
+  if (ch === "EMAIL") return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : "Enter an email address, e.g. you@example.com";
+  return /^\+?[0-9][0-9 -]{8,}[0-9]$/.test(v) ? null : "Enter a mobile number, e.g. 98400 12345";
+}
 
 export default function MessagesPage() {
   const { data, error, reload } = useApi<OutboxMessage[]>("/outbox?limit=200");
@@ -127,19 +136,23 @@ function TestSend({ onDone }: { onDone: () => void }) {
   const [to, setTo] = useState("");
   const [msg, setMsg] = useState("Test from the school ERP: if you can read this, the channel works.");
   const [result, setResult] = useState<OutboxMessage | null>(null);
+  const toError = recipientError(ch, to);
   const send = async () => {
-    const r = await run(() => api.post<OutboxMessage>("/channels/test", { channel: ch, to, message: msg }));
+    const r = await run(() => api.post<OutboxMessage>("/channels/test", { channel: ch, to: to.trim(), message: msg }));
     if (r) { setResult(r); onDone(); }
   };
   return (
     <Card title="Send a test message">
       <div className="space-y-3">
         <ErrorBox message={error} onClose={() => setError(null)} />
-        <ChannelPicker value={ch} onChange={setCh} />
-        <Field label="To"><input className="input" placeholder={PLACEHOLDER[ch]} value={to} onChange={(e) => setTo(e.target.value)} /></Field>
+        <ChannelPicker value={ch} onChange={(c) => { if (c !== ch) { setCh(c); setTo(""); setResult(null); } }} />
+        <Field label={`To (${RECIPIENT_LABEL[ch]})`} hint={toError ?? undefined}>
+          <input className="input" type={ch === "EMAIL" ? "email" : "tel"} inputMode={ch === "EMAIL" ? "email" : "tel"}
+            placeholder={PLACEHOLDER[ch]} value={to} onChange={(e) => setTo(e.target.value)} aria-invalid={!!toError} />
+        </Field>
         <Field label="Message"><textarea className="input min-h-16" value={msg} onChange={(e) => setMsg(e.target.value)} /></Field>
         <div className="flex items-center gap-3">
-          <button className="btn-primary" disabled={busy || !to.trim() || !msg.trim()} onClick={send}>Send</button>
+          <button className="btn-primary" disabled={busy || !to.trim() || !!toError || !msg.trim()} onClick={send}>Send</button>
           {result && <span className="text-xs"><StatusBadge status={result.status} /> {result.error}</span>}
         </div>
       </div>
