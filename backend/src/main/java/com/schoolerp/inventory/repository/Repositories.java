@@ -12,23 +12,23 @@ import com.schoolerp.inventory.model.Vendor;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 
-/** Concrete in-memory repositories. Replace with Supabase-backed ones later. */
+/** Concrete repositories: in memory, persisted to Supabase when SUPABASE_DB_URL is set. */
 public final class Repositories {
     private Repositories() {}
 
     @Repository
     public static class CategoryRepository extends InMemoryRepository<Category> {
-        public CategoryRepository() { super("CAT", Category::getId); }
+        public CategoryRepository() { super("CAT", Category::getId, Category.class); }
     }
 
     @Repository
     public static class ItemRepository extends InMemoryRepository<Item> {
-        public ItemRepository() { super("ITM", Item::getId); }
+        public ItemRepository() { super("ITM", Item::getId, Item.class); }
     }
 
     @Repository
     public static class VendorRepository extends InMemoryRepository<Vendor> {
-        public VendorRepository() { super("VEN", Vendor::getId); }
+        public VendorRepository() { super("VEN", Vendor::getId, Vendor.class); }
 
         public boolean existsByGstin(String gstin, String excludeId) {
             return gstin != null && !gstin.isBlank() && findAll().stream()
@@ -38,12 +38,12 @@ public final class Repositories {
 
     @Repository
     public static class PurchaseRequestRepository extends InMemoryRepository<PurchaseRequest> {
-        public PurchaseRequestRepository() { super("PR", PurchaseRequest::getId); }
+        public PurchaseRequestRepository() { super("PR", PurchaseRequest::getId, PurchaseRequest.class); }
     }
 
     @Repository
     public static class RfqRepository extends InMemoryRepository<Rfq> {
-        public RfqRepository() { super("RFQ", Rfq::getId); }
+        public RfqRepository() { super("RFQ", Rfq::getId, Rfq.class); }
 
         public List<Rfq> findByPurchaseRequest(String prId) {
             return findWhere(r -> r.getPurchaseRequestId().equals(prId));
@@ -56,7 +56,7 @@ public final class Repositories {
 
     @Repository
     public static class QuoteRepository extends InMemoryRepository<Quote> {
-        public QuoteRepository() { super("QT", Quote::getId); }
+        public QuoteRepository() { super("QT", Quote::getId, Quote.class); }
 
         public List<Quote> findByPurchaseRequest(String prId) {
             return findWhere(q -> q.getPurchaseRequestId().equals(prId));
@@ -69,12 +69,12 @@ public final class Repositories {
 
     @Repository
     public static class PurchaseOrderRepository extends InMemoryRepository<PurchaseOrder> {
-        public PurchaseOrderRepository() { super("PO", PurchaseOrder::getId); }
+        public PurchaseOrderRepository() { super("PO", PurchaseOrder::getId, PurchaseOrder.class); }
     }
 
     @Repository
     public static class GoodsReceiptRepository extends InMemoryRepository<GoodsReceipt> {
-        public GoodsReceiptRepository() { super("GRN", GoodsReceipt::getId); }
+        public GoodsReceiptRepository() { super("GRN", GoodsReceipt::getId, GoodsReceipt.class); }
 
         public List<GoodsReceipt> findByPurchaseOrder(String poId) {
             return findWhere(g -> g.getPurchaseOrderId().equals(poId));
@@ -83,7 +83,7 @@ public final class Repositories {
 
     @Repository
     public static class StockMovementRepository extends InMemoryRepository<StockMovement> {
-        public StockMovementRepository() { super("MOV", StockMovement::getId); }
+        public StockMovementRepository() { super("MOV", StockMovement::getId, StockMovement.class); }
 
         public List<StockMovement> findByItem(String itemId) {
             return findWhere(m -> m.getItemId().equals(itemId));

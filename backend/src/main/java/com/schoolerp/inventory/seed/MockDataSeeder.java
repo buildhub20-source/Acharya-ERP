@@ -75,6 +75,12 @@ public class MockDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // With Supabase connected, seed only an empty database; after that the stored data is the truth.
+        if (vendors.isPersistent() && vendors.count() > 0) {
+            log.info("Supabase data loaded: {} categories, {} items, {} vendors, {} purchase requests (mock seeding skipped)",
+                    categories.count(), items.count(), vendors.count(), procurement.list(null).size());
+            return;
+        }
         seedCategories();
         seedItems();
         seedStock();
